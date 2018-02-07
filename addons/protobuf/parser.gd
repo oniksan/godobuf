@@ -1,0 +1,2142 @@
+#
+# BSD 3-Clause License
+#
+# Copyright (c) 2018, Oleg Malyavkin
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+tool
+extends Node
+
+class Document:
+	
+	func _init(doc_name, doc_text):
+		name = doc_name
+		text = doc_text
+	
+	var name
+	var text
+
+class TokenPosition:
+	func _init(b, e):
+		begin = b
+		end = e
+	var begin = 0
+	var end = 0
+
+class Helper:
+
+	class StringPosition:
+		func _init(s, c, l):
+			str_num = s
+			column = c
+			length = l
+		var str_num
+		var column
+		var length
+	
+	static func str_pos(text, position):
+		var cur_str = 1
+		var cur_col = 1
+		var res_str = 0
+		var res_col = 0
+		var res_length = 0
+		for i in range(text.length()):
+			if text[i] == "\n":
+				cur_str += 1
+				cur_col = 0
+			if position.begin == i:
+				res_str = cur_str
+				res_col = cur_col
+				res_length = position.end - position.begin + 1
+				break
+			cur_col += 1
+		return StringPosition.new(res_str, res_col, res_length)
+	
+	static func text_pos(tokens, index):
+		var res_begin = 0
+		var res_end = 0
+		if index < tokens.size() && index >= 0:
+			res_begin = tokens[index].position.begin
+			res_end = tokens[index].position.end
+		return TokenPosition.new(res_begin, res_end)
+	
+	static func error_string(file_name, col, row, error_text):
+		return file_name + ":" + String(col) + ":" + String(row) + ": error: " + error_text
+
+class AnalyzeResult:
+	func _init():
+		pass
+
+class AnalyzeResult:
+	var classes = []
+	var fields = []
+	var groups = []
+	var version = 0
+	var state = false
+	var tokens = []
+	var syntax = []
+	var imports = []
+	var doc
+	
+	func soft_copy():
+		var res = AnalyzeResult.new()
+		res.classes = classes
+		res.fields = fields
+		res.groups = groups
+		res.version = version
+		res.state = state
+		res.tokens = tokens
+		res.syntax = syntax
+		res.imports = imports
+		res.doc = doc
+		return res
+
+class Analysis:
+	
+	func _init(path, doc):
+		path_dir = path
+		document = doc
+	
+	var document
+	var path_dir
+	
+	const LEX = {
+		LETTER = "[A-Za-z]",
+		DIGIT_DEC = "[0-9]",
+		DIGIT_OCT = "[0-7]",
+		DIGIT_HEX = "[0-9]|[A-F]|[a-f]",
+		BRACKET_ROUND_LEFT = "\\(",
+		BRACKET_ROUND_RIGHT = "\\)",
+		BRACKET_CURLY_LEFT = "\\{",
+		BRACKET_CURLY_RIGHT = "\\}",
+		BRACKET_SQUARE_LEFT = "\\[",
+		BRACKET_SQUARE_RIGHT = "\\]",
+		BRACKET_ANGLE_LEFT = "\\<",
+		BRACKET_ANGLE_RIGHT = "\\>",
+		SEMICOLON = ";",
+		COMMA = ",",
+		EQUAL = "=",
+		SIGN = "\\+|\\-",
+		SPACE = "\\s",
+		QUOTE_SINGLE = "'",
+		QUOTE_DOUBLE = "\"",
+	}
+	
+	const TOKEN_IDENT = "(" + LEX.LETTER + "+" + "(" + LEX.LETTER + "|" + LEX.DIGIT_DEC + "|" + "_)*)"
+	const TOKEN_FULL_IDENT = TOKEN_IDENT + "{0,1}(\\." + TOKEN_IDENT + ")+"
+	const TOKEN_BRACKET_ROUND_LEFT = "(" + LEX.BRACKET_ROUND_LEFT + ")"
+	const TOKEN_BRACKET_ROUND_RIGHT = "(" + LEX.BRACKET_ROUND_RIGHT + ")"
+	const TOKEN_BRACKET_CURLY_LEFT = "(" + LEX.BRACKET_CURLY_LEFT + ")"
+	const TOKEN_BRACKET_CURLY_RIGHT = "(" + LEX.BRACKET_CURLY_RIGHT + ")"
+	const TOKEN_BRACKET_SQUARE_LEFT = "(" + LEX.BRACKET_SQUARE_LEFT + ")"
+	const TOKEN_BRACKET_SQUARE_RIGHT = "(" + LEX.BRACKET_SQUARE_RIGHT + ")"
+	const TOKEN_BRACKET_ANGLE_LEFT = "(" + LEX.BRACKET_ANGLE_LEFT + ")"
+	const TOKEN_BRACKET_ANGLE_RIGHT = "(" + LEX.BRACKET_ANGLE_RIGHT + ")"
+	const TOKEN_SEMICOLON = "(" + LEX.SEMICOLON + ")"
+	const TOKEN_EUQAL = "(" + LEX.EQUAL + ")"
+	const TOKEN_SIGN = "(" + LEX.SIGN + ")"
+	const TOKEN_LITERAL_DEC = "(([1-9])" + LEX.DIGIT_DEC +"*)"
+	const TOKEN_LITERAL_OCT = "(0" + LEX.DIGIT_OCT +"*)"
+	const TOKEN_LITERAL_HEX = "(0(x|X)(" + LEX.DIGIT_HEX +")+)"
+	const TOKEN_LITERAL_INT = "((\\+|\\-){0,1}" + TOKEN_LITERAL_DEC + "|" + TOKEN_LITERAL_OCT + "|" + TOKEN_LITERAL_HEX + ")"
+	const TOKEN_LITERAL_FLOAT_DEC = "(" + LEX.DIGIT_DEC + "+)"
+	const TOKEN_LITERAL_FLOAT_EXP = "((e|E)(\\+|\\-)?" + TOKEN_LITERAL_FLOAT_DEC + "+)"
+	const TOKEN_LITERAL_FLOAT = "((\\+|\\-){0,1}(" + TOKEN_LITERAL_FLOAT_DEC + "\\." + TOKEN_LITERAL_FLOAT_DEC + "?" + TOKEN_LITERAL_FLOAT_EXP + "?)|(" + TOKEN_LITERAL_FLOAT_DEC + TOKEN_LITERAL_FLOAT_EXP + ")|(\\." + TOKEN_LITERAL_FLOAT_DEC + TOKEN_LITERAL_FLOAT_EXP + "?))"
+	const TOKEN_SPACE = "(" + LEX.SPACE + ")+"
+	const TOKEN_COMMA = "(" + LEX.COMMA + ")"
+	const TOKEN_CHAR_ESC = "[\\\\(a|b|f|n|r|t|v|\\\\|'|\")]"
+	const TOKEN_OCT_ESC = "[\\\\" + LEX.DIGIT_OCT + "{3}]"
+	const TOKEN_HEX_ESC = "[\\\\(x|X)" + LEX.DIGIT_HEX + "{2}]"
+	const TOKEN_CHAR_EXCLUDE = "[^\\0\\n\\\\]"
+	const TOKEN_CHAR_VALUE = "(" + TOKEN_HEX_ESC + "|" + TOKEN_OCT_ESC + "|" + TOKEN_CHAR_ESC + "|" + TOKEN_CHAR_EXCLUDE + ")"
+	const TOKEN_STRING_SINGLE = "('" + TOKEN_CHAR_VALUE + "*?')"
+	const TOKEN_STRING_DOUBLE = "(\"" + TOKEN_CHAR_VALUE + "*?\")"
+	const TOKEN_COMMENT_SINGLE = "(//[^\\n\\r]*)"
+	const TOKEN_COMMENT_MULTI = "/\\*(.|[\\n\\r])*?\\*/"
+	
+	const TOKEN_SECOND_MESSAGE = "^message$"
+	const TOKEN_SECOND_SIMPLE_DATA_TYPE = "^(double|float|int32|int64|uint32|uint64|sint32|sint64|fixed32|fixed64|sfixed32|sfixed64|bool|string|bytes)$"
+	const TOKEN_SECOND_ENUM = "^enum$"
+	const TOKEN_SECOND_MAP = "^map$"
+	const TOKEN_SECOND_ONEOF = "^oneof$"
+	const TOKEN_SECOND_LITERAL_BOOL = "^(true|false)$"
+	const TOKEN_SECOND_SYNTAX = "^syntax$"
+	const TOKEN_SECOND_IMPORT = "^import$"
+	const TOKEN_SECOND_PACKAGE = "^package$"
+	const TOKEN_SECOND_OPTION = "^option$"
+	const TOKEN_SECOND_SERVICE = "^service$"
+	const TOKEN_SECOND_RESERVED = "^reserved$"
+	const TOKEN_SECOND_IMPORT_QUALIFICATION = "^(weak|public)$"
+	const TOKEN_SECOND_FIELD_QUALIFICATION = "^(repeated|required|optional)$"
+	const TOKEN_SECOND_ENUM_OPTION = "^allow_alias$"
+	const TOKEN_SECOND_QUALIFICATION = "^(custom_option|extensions)$"
+	const TOKEN_SECOND_FIELD_OPTION = "^packed$"
+	
+	class TokenEntrance:
+		func _init(i, b, e, t):
+			position = TokenPosition.new(b, e)
+			text = t
+			id = i
+		var position
+		var text
+		var id
+	
+	enum RANGE_STATE {
+		INCLUDE = 0,
+		EXCLUDE_LEFT = 1,
+		EXCLUDE_RIGHT = 2,
+		OVERLAY = 3,
+		EQUAL = 4,
+		ENTERS = 5
+	}
+	
+	class TokenRange:
+		func _init(b, e, s):
+			position = TokenPosition.new(b, e)
+			state = s
+		var position
+		var state
+	
+	class Token:
+		var _regex
+		var _entrance = null
+		var _entrances = []
+		var _entrance_index = 0
+		var _id
+		var _ignore
+		var _clarification
+		
+		func _init(id, clarification, regex_str, ignore = false):
+			_id = id
+			_regex = RegEx.new()
+			_regex.compile(regex_str)
+			_clarification = clarification
+			_ignore = ignore
+			
+		func find(text, start):
+			_entrance = null
+			if !_regex.is_valid():
+				return null
+			var match_result = _regex.search(text, start)
+			if match_result != null:
+				var capture
+				capture = match_result.get_string(0)
+				if capture.empty():
+					return null
+				_entrance = TokenEntrance.new(_id, match_result.get_start(0), capture.length() - 1 + match_result.get_start(0), capture)
+			return _entrance
+			
+		func find_all(text):
+			var pos = 0
+			clear()
+			while find(text, pos) != null:
+				_entrances.append(_entrance)
+				pos = _entrance.position.end + 1
+			return _entrances
+		
+		func add_entrance(entrance):
+			_entrances.append(entrance)
+		
+		func clear():
+			_entrance = null
+			_entrances = []
+			_entrance_index = 0
+			
+		func get_entrances():
+			return _entrances
+		
+		func remove_entrance(index):
+			if index < _entrances.size():
+				_entrances.remove(index)
+		
+		func get_index():
+			return _entrance_index
+			
+		func set_index(index):
+			if index < _entrances.size():
+				_entrance_index = index
+			else:
+				_entrance_index = 0
+		
+		func is_ignore():
+			return _ignore
+			
+		func get_clarification():
+			return _clarification
+	
+	class TokenResult:
+		var tokens = []
+		var errors = []
+	
+	enum TOKEN_ID {
+		UNDEFINED = -1,
+		IDENT = 0,
+		FULL_IDENT = 1,
+		BRACKET_ROUND_LEFT = 2,
+		BRACKET_ROUND_RIGHT = 3,
+		BRACKET_CURLY_LEFT = 4,
+		BRACKET_CURLY_RIGHT = 5,
+		BRACKET_SQUARE_LEFT = 6,
+		BRACKET_SQUARE_RIGHT = 7,
+		BRACKET_ANGLE_LEFT = 8,
+		BRACKET_ANGLE_RIGHT = 9,
+		SEMICOLON = 10,
+		EUQAL = 11,
+		SIGN = 12,
+		INT = 13,
+		FLOAT = 14,
+		SPACE = 15,
+		COMMA = 16,
+		STRING_SINGLE = 17,
+		STRING_DOUBLE = 18,
+		COMMENT_SINGLE = 19,
+		COMMENT_MULTI = 20,
+		
+		MESSAGE = 21,
+		SIMPLE_DATA_TYPE = 22,
+		ENUM = 23,
+		MAP = 24,
+		ONEOF = 25,
+		LITERAL_BOOL = 26,
+		SYNTAX = 27,
+		IMPORT = 28,
+		PACKAGE = 29,
+		OPTION = 30,
+		SERVICE = 31,
+		RESERVED = 32,
+		IMPORT_QUALIFICATION = 33,
+		FIELD_QUALIFICATION = 34,
+		ENUM_OPTION = 35,
+		QUALIFICATION = 36,
+		FIELD_OPTION = 37,
+		
+		STRING = 38
+	}
+	
+	var TOKEN = {
+		TOKEN_ID.IDENT: Token.new(TOKEN_ID.IDENT, "Identifier", TOKEN_IDENT),
+		TOKEN_ID.FULL_IDENT: Token.new(TOKEN_ID.FULL_IDENT, "Full identifier", TOKEN_FULL_IDENT),
+		TOKEN_ID.BRACKET_ROUND_LEFT: Token.new(TOKEN_ID.BRACKET_ROUND_LEFT, "(", TOKEN_BRACKET_ROUND_LEFT),
+		TOKEN_ID.BRACKET_ROUND_RIGHT: Token.new(TOKEN_ID.BRACKET_ROUND_RIGHT, ")", TOKEN_BRACKET_ROUND_RIGHT),
+		TOKEN_ID.BRACKET_CURLY_LEFT: Token.new(TOKEN_ID.BRACKET_CURLY_LEFT, "{", TOKEN_BRACKET_CURLY_LEFT),
+		TOKEN_ID.BRACKET_CURLY_RIGHT: Token.new(TOKEN_ID.BRACKET_CURLY_RIGHT, "}", TOKEN_BRACKET_CURLY_RIGHT),
+		TOKEN_ID.BRACKET_SQUARE_LEFT: Token.new(TOKEN_ID.BRACKET_SQUARE_LEFT, "[", TOKEN_BRACKET_SQUARE_LEFT),
+		TOKEN_ID.BRACKET_SQUARE_RIGHT: Token.new(TOKEN_ID.BRACKET_SQUARE_RIGHT, "]", TOKEN_BRACKET_SQUARE_RIGHT),
+		TOKEN_ID.BRACKET_ANGLE_LEFT: Token.new(TOKEN_ID.BRACKET_ANGLE_LEFT, "<", TOKEN_BRACKET_ANGLE_LEFT),
+		TOKEN_ID.BRACKET_ANGLE_RIGHT: Token.new(TOKEN_ID.BRACKET_ANGLE_RIGHT, ">", TOKEN_BRACKET_ANGLE_RIGHT),
+		TOKEN_ID.SEMICOLON: Token.new(TOKEN_ID.SEMICOLON, ";", TOKEN_SEMICOLON),
+		TOKEN_ID.EUQAL: Token.new(TOKEN_ID.EUQAL, "=", TOKEN_EUQAL),
+		TOKEN_ID.INT: Token.new(TOKEN_ID.INT, "Integer", TOKEN_LITERAL_INT),
+		TOKEN_ID.FLOAT: Token.new(TOKEN_ID.FLOAT, "Float", TOKEN_LITERAL_FLOAT),
+		TOKEN_ID.SPACE: Token.new(TOKEN_ID.SPACE, "Space", TOKEN_SPACE),
+		TOKEN_ID.COMMA: Token.new(TOKEN_ID.COMMA, ",", TOKEN_COMMA),
+		TOKEN_ID.STRING_SINGLE: Token.new(TOKEN_ID.STRING_SINGLE, "'String'", TOKEN_STRING_SINGLE),
+		TOKEN_ID.STRING_DOUBLE: Token.new(TOKEN_ID.STRING_DOUBLE, "\"String\"", TOKEN_STRING_DOUBLE),
+		TOKEN_ID.COMMENT_SINGLE: Token.new(TOKEN_ID.COMMENT_SINGLE, "//Comment", TOKEN_COMMENT_SINGLE),
+		TOKEN_ID.COMMENT_MULTI: Token.new(TOKEN_ID.COMMENT_MULTI, "/*Comment*/", TOKEN_COMMENT_MULTI),
+		
+		TOKEN_ID.MESSAGE: Token.new(TOKEN_ID.MESSAGE, "Message", TOKEN_SECOND_MESSAGE, true),
+		TOKEN_ID.SIMPLE_DATA_TYPE: Token.new(TOKEN_ID.SIMPLE_DATA_TYPE, "Data type", TOKEN_SECOND_SIMPLE_DATA_TYPE, true),
+		TOKEN_ID.ENUM: Token.new(TOKEN_ID.ENUM, "Enum", TOKEN_SECOND_ENUM, true),
+		TOKEN_ID.MAP: Token.new(TOKEN_ID.MAP, "Map", TOKEN_SECOND_MAP, true),
+		TOKEN_ID.ONEOF: Token.new(TOKEN_ID.ONEOF, "OneOf", TOKEN_SECOND_ONEOF, true),
+		TOKEN_ID.LITERAL_BOOL: Token.new(TOKEN_ID.LITERAL_BOOL, "Bool literal", TOKEN_SECOND_LITERAL_BOOL, true),
+		TOKEN_ID.SYNTAX: Token.new(TOKEN_ID.SYNTAX, "Syntax", TOKEN_SECOND_SYNTAX, true),
+		TOKEN_ID.IMPORT: Token.new(TOKEN_ID.IMPORT, "Import", TOKEN_SECOND_IMPORT, true),
+		TOKEN_ID.PACKAGE: Token.new(TOKEN_ID.PACKAGE, "Package", TOKEN_SECOND_PACKAGE, true),
+		TOKEN_ID.OPTION: Token.new(TOKEN_ID.OPTION, "Option", TOKEN_SECOND_OPTION, true),
+		TOKEN_ID.SERVICE: Token.new(TOKEN_ID.SERVICE, "Service", TOKEN_SECOND_SERVICE, true),
+		TOKEN_ID.RESERVED: Token.new(TOKEN_ID.RESERVED, "Reserved", TOKEN_SECOND_RESERVED, true),
+		TOKEN_ID.IMPORT_QUALIFICATION: Token.new(TOKEN_ID.IMPORT_QUALIFICATION, "Import qualification", TOKEN_SECOND_IMPORT_QUALIFICATION, true),
+		TOKEN_ID.FIELD_QUALIFICATION: Token.new(TOKEN_ID.FIELD_QUALIFICATION, "Field qualification", TOKEN_SECOND_FIELD_QUALIFICATION, true),
+		TOKEN_ID.ENUM_OPTION: Token.new(TOKEN_ID.ENUM_OPTION, "Enum option", TOKEN_SECOND_ENUM_OPTION, true),
+		TOKEN_ID.QUALIFICATION: Token.new(TOKEN_ID.QUALIFICATION, "Qualification", TOKEN_SECOND_QUALIFICATION, true),
+		TOKEN_ID.FIELD_OPTION: Token.new(TOKEN_ID.FIELD_OPTION, "Field option", TOKEN_SECOND_FIELD_OPTION, true),
+		
+		TOKEN_ID.STRING: Token.new(TOKEN_ID.STRING, "String", "", true)
+	}
+	
+	static func check_range(main, current):
+		if main.position.begin > current.position.begin:
+			if main.position.end > current.position.end:
+				if main.position.begin >= current.position.end:
+					return TokenRange.new(current.position.begin, current.position.end, RANGE_STATE.EXCLUDE_LEFT)
+				else:
+					return TokenRange.new(main.position.begin, current.position.end, RANGE_STATE.OVERLAY)
+			else:
+				return TokenRange.new(current.position.begin, current.position.end, RANGE_STATE.ENTERS)
+		elif main.position.begin < current.position.begin:
+			if main.position.end >= current.position.end:
+				return TokenRange.new(main.position.begin, main.position.end, RANGE_STATE.INCLUDE)
+			else:
+				if main.position.end < current.position.begin:
+					return TokenRange.new(main.position.begin, main.position.end, RANGE_STATE.EXCLUDE_RIGHT)
+				else:
+					return TokenRange.new(main.position.begin, current.position.end, RANGE_STATE.OVERLAY)
+		else:
+			if main.position.end == current.position.end:
+				return TokenRange.new(main.position.begin, main.position.end, RANGE_STATE.EQUAL)
+			elif main.position.end > current.position.end:
+				return TokenRange.new(main.position.begin, main.position.end, RANGE_STATE.INCLUDE)
+			else:
+				return TokenRange.new(current.position.begin, current.position.end, RANGE_STATE.ENTERS)
+
+	func tokenizer():
+		var current_str
+		var current_pos = 0
+		for k in TOKEN:
+			if !TOKEN[k].is_ignore():
+				TOKEN[k].find_all(document.text)
+		var second_tokens = []
+		second_tokens.append(TOKEN[TOKEN_ID.MESSAGE])
+		second_tokens.append(TOKEN[TOKEN_ID.SIMPLE_DATA_TYPE])
+		second_tokens.append(TOKEN[TOKEN_ID.ENUM])
+		second_tokens.append(TOKEN[TOKEN_ID.MAP])
+		second_tokens.append(TOKEN[TOKEN_ID.ONEOF])
+		second_tokens.append(TOKEN[TOKEN_ID.LITERAL_BOOL])
+		second_tokens.append(TOKEN[TOKEN_ID.SYNTAX])
+		second_tokens.append(TOKEN[TOKEN_ID.IMPORT])
+		second_tokens.append(TOKEN[TOKEN_ID.PACKAGE])
+		second_tokens.append(TOKEN[TOKEN_ID.OPTION])
+		second_tokens.append(TOKEN[TOKEN_ID.SERVICE])
+		second_tokens.append(TOKEN[TOKEN_ID.RESERVED])
+		second_tokens.append(TOKEN[TOKEN_ID.IMPORT_QUALIFICATION])
+		second_tokens.append(TOKEN[TOKEN_ID.FIELD_QUALIFICATION])
+		second_tokens.append(TOKEN[TOKEN_ID.ENUM_OPTION])
+		second_tokens.append(TOKEN[TOKEN_ID.QUALIFICATION])
+		second_tokens.append(TOKEN[TOKEN_ID.FIELD_OPTION])
+		
+		var ident_token = TOKEN[TOKEN_ID.IDENT]
+		for sec_token in second_tokens:
+			var remove_indexes = []
+			for i in range(ident_token.get_entrances().size()):
+				var entrance = sec_token.find(ident_token.get_entrances()[i].text, 0)
+				if entrance != null:
+					entrance.position.begin = ident_token.get_entrances()[i].position.begin
+					entrance.position.end = ident_token.get_entrances()[i].position.end
+					sec_token.add_entrance(entrance)
+					remove_indexes.append(i)
+			for i in range(remove_indexes.size()):
+				ident_token.remove_entrance(remove_indexes[i] - i)
+		for v in TOKEN[TOKEN_ID.STRING_DOUBLE].get_entrances():
+			v.id = TOKEN_ID.STRING
+			TOKEN[TOKEN_ID.STRING].add_entrance(v)
+		TOKEN[TOKEN_ID.STRING_DOUBLE].clear()
+		for v in TOKEN[TOKEN_ID.STRING_SINGLE].get_entrances():
+			v.id = TOKEN_ID.STRING
+			TOKEN[TOKEN_ID.STRING].add_entrance(v)
+		TOKEN[TOKEN_ID.STRING_SINGLE].clear()
+		var main_token
+		var cur_token
+		var main_index = -1
+		var token_index_flag = false
+		var result = TokenResult.new()
+		var check
+		var end = false
+		var all = false
+		var repeat = false
+		while true:
+			all = true
+			for k in TOKEN:
+				if main_index == k:
+					continue
+				repeat = false
+				while TOKEN[k].get_entrances().size() > 0:
+					all = false
+					if !token_index_flag:
+						main_index = k
+						main_token = TOKEN[main_index].get_entrances()[0]
+						token_index_flag = true
+						break
+					else:
+						cur_token = TOKEN[k].get_entrances()[0]
+						check = check_range(main_token, cur_token)
+						if check.state == INCLUDE:
+							TOKEN[k].remove_entrance(0)
+							end = true
+						elif check.state == EXCLUDE_LEFT:
+							main_token = cur_token
+							main_index = k
+							end = false
+							repeat = true
+							break
+						elif check.state == EXCLUDE_RIGHT:
+							end = true
+							break
+						elif check.state == OVERLAY || check.state == EQUAL:
+							result.errors.append(check)
+							TOKEN[main_index].remove_entrance(0)
+							TOKEN[k].remove_entrance(0)
+							token_index_flag = false
+							end = false
+							repeat = true
+							break
+						elif check.state == ENTERS:
+							TOKEN[main_index].remove_entrance(0)
+							main_token = cur_token
+							main_index = k
+							end = false
+							repeat = true
+							break
+				if repeat:
+					break
+			if end:
+				if TOKEN[main_index].get_entrances().size() > 0:
+					result.tokens.append(main_token)
+					TOKEN[main_index].remove_entrance(0)
+				token_index_flag = false
+			if all:
+				break
+		return result
+
+	static func check_tokens_integrity(tokens, end):
+		var cur_index = 0
+		var result = []
+		for v in tokens:
+			if v.position.begin > cur_index:
+				result.append(TokenPosition.new(cur_index, v.position.begin))
+			cur_index = v.position.end + 1
+		if cur_index < end:
+			result.append(TokenPosition.new(cur_index, end))
+		return result
+
+	static func comment_space_processing(tokens):
+		var remove_indexes = []
+		for i in range(tokens.size()):
+			if tokens[i].id == TOKEN_ID.COMMENT_SINGLE || tokens[i].id == TOKEN_ID.COMMENT_MULTI:
+				tokens[i].id = TOKEN_ID.SPACE
+		var space_index = -1
+		for i in range(tokens.size()):
+			if tokens[i].id == TOKEN_ID.SPACE:
+				if space_index >= 0:
+					tokens[space_index].position.end = tokens[i].position.end
+					tokens[space_index].text = tokens[space_index].text + tokens[i].text
+					remove_indexes.append(i)
+				else:
+					space_index = i
+			else:
+				space_index = -1
+		for i in range(remove_indexes.size()):
+			tokens.remove(remove_indexes[i] - i)
+	
+	#Analysis rule
+	enum AR {
+		MAYBE = 1,
+		MUST_ONE = 2,
+		ANY = 3,
+		OR = 4,
+		MAYBE_BEGIN = 5,
+		MAYBE_END = 6,
+		ANY_BEGIN = 7,
+		ANY_END = 8
+	}
+
+	#Space rule (space after token)
+	enum SP {
+		MAYBE = 1,
+		MUST = 2,
+		NO = 3
+	}
+
+	#Analysis Syntax Description
+	class ASD:
+		func _init(t, s = SP.MAYBE, r = AR.MUST_ONE, i = false):
+			token = t
+			space = s
+			rule = r
+			importance = i
+		var token
+		var space
+		var rule
+		var importance
+	
+	var TEMPLATE_SYNTAX = [
+		funcref(self, "desc_syntax"),
+		ASD.new(TOKEN_ID.SYNTAX),
+		ASD.new(TOKEN_ID.EUQAL),
+		ASD.new(TOKEN_ID.STRING, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.SEMICOLON)
+	]
+	
+	var TEMPLATE_IMPORT = [
+		funcref(self, "desc_import"),
+		ASD.new(TOKEN_ID.IMPORT, SP.MUST),
+		ASD.new(TOKEN_ID.IMPORT_QUALIFICATION, SP.MUST, AR.MAYBE, true),
+		ASD.new(TOKEN_ID.STRING, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.SEMICOLON)
+	]
+	
+	var TEMPLATE_PACKAGE = [
+		funcref(self, "desc_package"),
+		ASD.new(TOKEN_ID.PACKAGE, SP.MUST),
+		ASD.new([TOKEN_ID.IDENT, TOKEN_ID.FULL_IDENT], SP.MAYBE, AR.OR, true),
+		ASD.new(TOKEN_ID.SEMICOLON)
+	]
+	
+	var TEMPLATE_OPTION = [
+		funcref(self, "desc_option"),
+		ASD.new(TOKEN_ID.OPTION, SP.MUST),
+		ASD.new([TOKEN_ID.IDENT, TOKEN_ID.FULL_IDENT], SP.MAYBE, AR.OR, true),
+		ASD.new(TOKEN_ID.EUQAL),
+		ASD.new([TOKEN_ID.STRING, TOKEN_ID.INT, TOKEN_ID.FLOAT, TOKEN_ID.LITERAL_BOOL], SP.MAYBE, AR.OR, true),
+		ASD.new(TOKEN_ID.SEMICOLON)
+	]
+	
+	var TEMPLATE_FIELD = [
+		funcref(self, "desc_field"),
+		ASD.new(TOKEN_ID.FIELD_QUALIFICATION, SP.MUST, AR.MAYBE, true),
+		ASD.new([TOKEN_ID.SIMPLE_DATA_TYPE, TOKEN_ID.IDENT, TOKEN_ID.FULL_IDENT], SP.MAYBE, AR.OR, true),
+		ASD.new(TOKEN_ID.IDENT, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.EUQAL),
+		ASD.new(TOKEN_ID.INT, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.BRACKET_SQUARE_LEFT, SP.MAYBE, AR.MAYBE_BEGIN),
+		ASD.new(TOKEN_ID.FIELD_OPTION, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.EUQAL),
+		ASD.new(TOKEN_ID.LITERAL_BOOL, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.BRACKET_SQUARE_RIGHT, SP.MAYBE, AR.MAYBE_END),
+		ASD.new(TOKEN_ID.SEMICOLON)
+	]
+	
+	var TEMPLATE_FIELD_ONEOF = TEMPLATE_FIELD
+	
+	var TEMPLATE_MAP_FIELD = [
+		funcref(self, "desc_map_field"),
+		ASD.new(TOKEN_ID.MAP),
+		ASD.new(TOKEN_ID.BRACKET_ANGLE_LEFT),
+		ASD.new(TOKEN_ID.SIMPLE_DATA_TYPE, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.COMMA),
+		ASD.new([TOKEN_ID.SIMPLE_DATA_TYPE, TOKEN_ID.IDENT, TOKEN_ID.FULL_IDENT], SP.MAYBE, AR.OR, true),
+		ASD.new(TOKEN_ID.BRACKET_ANGLE_RIGHT, SP.MUST),
+		ASD.new(TOKEN_ID.IDENT, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.EUQAL),
+		ASD.new(TOKEN_ID.INT, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.BRACKET_SQUARE_LEFT, SP.MAYBE, AR.MAYBE_BEGIN),
+		ASD.new(TOKEN_ID.FIELD_OPTION, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.EUQAL),
+		ASD.new(TOKEN_ID.LITERAL_BOOL, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.BRACKET_SQUARE_RIGHT, SP.MAYBE, AR.MAYBE_END),
+		ASD.new(TOKEN_ID.SEMICOLON)
+	]
+	
+	var TEMPLATE_MAP_FIELD_ONEOF = TEMPLATE_MAP_FIELD
+	
+	var TEMPLATE_ENUM = [
+		funcref(self, "desc_enum"),
+		ASD.new(TOKEN_ID.ENUM, SP.MUST),
+		ASD.new(TOKEN_ID.IDENT, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.BRACKET_CURLY_LEFT),
+		ASD.new(TOKEN_ID.OPTION, SP.MUST, AR.MAYBE_BEGIN),
+		ASD.new(TOKEN_ID.ENUM_OPTION, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.EUQAL),
+		ASD.new(TOKEN_ID.LITERAL_BOOL, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.SEMICOLON, SP.MAYBE, AR.MAYBE_END),
+		ASD.new(TOKEN_ID.IDENT, SP.MAYBE, AR.ANY_BEGIN, true),
+		ASD.new(TOKEN_ID.EUQAL),
+		ASD.new(TOKEN_ID.INT, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.SEMICOLON, SP.MAYBE, AR.ANY_END),
+		ASD.new(TOKEN_ID.BRACKET_CURLY_RIGHT)
+	]
+	
+	var TEMPLATE_MESSAGE_HEAD = [
+		funcref(self, "desc_message_head"),
+		ASD.new(TOKEN_ID.MESSAGE, SP.MUST),
+		ASD.new(TOKEN_ID.IDENT, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.BRACKET_CURLY_LEFT)
+	]
+	
+	var TEMPLATE_MESSAGE_TAIL = [
+		funcref(self, "desc_message_tail"),
+		ASD.new(TOKEN_ID.BRACKET_CURLY_RIGHT)
+	]
+	
+	var TEMPLATE_ONEOF_HEAD = [
+		funcref(self, "desc_oneof_head"),
+		ASD.new(TOKEN_ID.ONEOF, SP.MUST),
+		ASD.new(TOKEN_ID.IDENT, SP.MAYBE, AR.MUST_ONE, true),
+		ASD.new(TOKEN_ID.BRACKET_CURLY_LEFT),
+	]
+	
+	var TEMPLATE_ONEOF_TAIL = [
+		funcref(self, "desc_oneof_tail"),
+		ASD.new(TOKEN_ID.BRACKET_CURLY_RIGHT)
+	]
+	
+	var TEMPLATE_BEGIN = [
+		null,
+		ASD.new(TOKEN_ID.SPACE, SP.NO, AR.MAYBE)
+	]
+	
+	var TEMPLATE_END = [
+		null
+	]
+	
+	func get_token_id(tokens, index):
+		if index < tokens.size():
+			return tokens[index].id
+		return TOKEN_ID.UNDEFINED
+	
+	enum COMPARE_STATE {
+		DONE = 0,
+		MISMATCH = 1,
+		INCOMPLETE = 2,
+		ERROR_VALUE = 3
+	}
+
+	class TokenCompare:
+		func _init(s, i, d = ""):
+			state = s
+			index = i
+			description = d
+		var state
+		var index
+		var description
+	
+	func check_space(tokens, index, space):
+		if get_token_id(tokens, index) == TOKEN_ID.SPACE:
+			if space == SP.MAYBE:
+				return 1
+			elif space == SP.MUST:
+				return 1
+			elif space == SP.NO:
+				return -1
+		else:
+			if space == SP.MUST:
+				return -2
+		return 0
+	
+	class IndexedToken:
+		func _init(t, i):
+			token = t
+			index = i
+		var token
+		var index
+	
+	func token_importance_checkadd(template, token, index, importance):
+		if template.importance:
+			importance.append(IndexedToken.new(token, index))
+	
+	class CompareSettings:
+		func _init(ci, n, pi, pn = ""):
+			construction_index = ci
+			nesting = n
+			parent_index = pi
+			parent_name = pn
+			
+		var construction_index
+		var nesting
+		var parent_index
+		var parent_name
+	
+	func description_compare(template, tokens, index, settings):
+		var j = index
+		var space
+		var rule
+		var rule_flag
+		var cont
+		var check
+		var maybe_group_skip = false
+		var any_group_index = -1
+		var any_end_group_index = -1
+		var i = 0
+		var importance = []
+		while true:
+			i += 1
+			if i >= template.size():
+				break
+			rule_flag = false
+			cont = false
+			rule = template[i].rule
+			space = template[i].space
+			if rule == AR.MAYBE_END && maybe_group_skip:
+				maybe_group_skip = false
+				continue
+			if maybe_group_skip:
+				continue
+			if rule == AR.MAYBE:
+				if template[i].token == get_token_id(tokens, j):
+					token_importance_checkadd(template[i], tokens[j], j, importance)
+					rule_flag = true
+				else:
+					continue
+			elif rule == AR.MUST_ONE || rule == AR.MAYBE_END || rule == AR.ANY_END:
+				if template[i].token == get_token_id(tokens, j):
+					token_importance_checkadd(template[i], tokens[j], j, importance)
+					rule_flag = true
+			elif rule == AR.ANY:
+				var find_any = false
+				while true:
+					if template[i].token == get_token_id(tokens, j):
+						token_importance_checkadd(template[i], tokens[j], j, importance)
+						find_any = true
+						j += 1
+						check = check_space(tokens, j, space)
+						if check < 0:
+							return TokenCompare.new(COMPARE_STATE.INCOMPLETE, j)
+						else:
+							j += check
+					else:
+						if find_any:
+							cont = true
+						break
+			elif rule == AR.OR:
+				var or_tokens = template[i].token
+				for v in or_tokens:
+					if v == get_token_id(tokens, j):
+						token_importance_checkadd(template[i], tokens[j], j, importance)
+						j += 1
+						check = check_space(tokens, j, space)
+						if check < 0:
+							return TokenCompare.new(COMPARE_STATE.INCOMPLETE, j)
+						else:
+							j += check
+							cont = true
+							break
+			elif rule == AR.MAYBE_BEGIN:
+				if template[i].token == get_token_id(tokens, j):
+					token_importance_checkadd(template[i], tokens[j], j, importance)
+					rule_flag = true
+				else:
+					maybe_group_skip = true
+					continue
+			elif rule == AR.ANY_BEGIN:
+				if template[i].token == get_token_id(tokens, j):
+					token_importance_checkadd(template[i], tokens[j], j, importance)
+					rule_flag = true
+					any_group_index = i
+				else:
+					if any_end_group_index > 0:
+						any_group_index = -1
+						i = any_end_group_index
+						any_end_group_index = -1
+						continue
+			if cont:
+				continue
+			if rule_flag:
+				j += 1
+				check = check_space(tokens, j, space)
+				if check < 0:
+					return TokenCompare.new(COMPARE_STATE.INCOMPLETE, j)
+				else:
+					j += check
+			else:
+				if j > index:
+					return TokenCompare.new(COMPARE_STATE.INCOMPLETE, j)
+				else:
+					return TokenCompare.new(COMPARE_STATE.MISMATCH, j)
+			if any_group_index >= 0 && rule == AR.ANY_END:
+				any_end_group_index = i
+				i = any_group_index - 1
+		if template[0] != null:
+			var result = template[0].call_func(importance, settings)
+			if !result.success:
+				return TokenCompare.new(COMPARE_STATE.ERROR_VALUE, result.error, result.description)
+		return TokenCompare.new(COMPARE_STATE.DONE, j)
+	
+	var DESCRIPTION = [
+		TEMPLATE_BEGIN,				#0
+		TEMPLATE_SYNTAX,			#1
+		TEMPLATE_IMPORT,			#2
+		TEMPLATE_PACKAGE,			#3
+		TEMPLATE_OPTION,			#4
+		TEMPLATE_FIELD,				#5
+		TEMPLATE_FIELD_ONEOF,		#6
+		TEMPLATE_MAP_FIELD,			#7
+		TEMPLATE_MAP_FIELD_ONEOF,	#8
+		TEMPLATE_ENUM,				#9
+		TEMPLATE_MESSAGE_HEAD,		#10
+		TEMPLATE_MESSAGE_TAIL,		#11
+		TEMPLATE_ONEOF_HEAD,		#12
+		TEMPLATE_ONEOF_TAIL,		#13
+		TEMPLATE_END				#14
+	]
+	
+	enum JUMP {
+		NOTHING = 0,				#nothing
+		SIMPLE = 1,					#simple jump
+		NESTED_INCREMENT = 2,		#nested increment
+		NESTED_DECREMENT = 3,		#nested decrement
+		MUST_NESTED_SIMPLE = 4,		#check: must be nested > 0
+		MUST_NESTED_INCREMENT = 5,	#check: must be nested > 0, then nested increment
+		MUST_NESTED_DECREMENT = 6,	#nested decrement, then check: must be nested > 0
+	}
+	
+	var TRANSLATION_TABLE = [
+	#   BEGIN	SYNTAX	IMPORT	PACKAGE	OPTION	FIELD	FIELD_O	MAP_F	MAP_F_O	ENUM	MES_H	MES_T	ONEOF_H	ONEOF_T	END
+	[	0, 		1, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0], #BEGIN
+	[	0, 		0, 		1, 		1, 		1, 		0, 		0, 		0, 		0, 		1, 		2, 		0, 		0, 		0, 		1], #SYNTAX
+	[	0, 		0, 		1, 		1, 		1, 		0, 		0, 		0, 		0, 		1, 		2, 		0, 		0, 		0, 		1], #IMPORT
+	[	0, 		0, 		1, 		1, 		1, 		0, 		0, 		0, 		0, 		1, 		2, 		0, 		0, 		0, 		1], #PACKAGE
+	[	0, 		0, 		1, 		1, 		1, 		0, 		0, 		0, 		0, 		1, 		2, 		0, 		0, 		0, 		1], #OPTION
+	[	0, 		0, 		0, 		0, 		0, 		4, 		0, 		4, 		0, 		1, 		2, 		3, 		5, 		0, 		0], #FIELD
+	[	0, 		0, 		0, 		0, 		0, 		0, 		4, 		0, 		4, 		0, 		0, 		0, 		0, 		6, 		0], #FIELD_ONEOF
+	[	0, 		0, 		0, 		0, 		0, 		4, 		0, 		4, 		0, 		1, 		2, 		3, 		5, 		0, 		0], #MAP_F
+	[	0, 		0, 		0, 		0, 		0, 		0, 		4, 		0, 		4, 		0, 		0, 		0, 		0, 		6, 		0], #MAP_F_ONEOF
+	[	0, 		0, 		0, 		0, 		0, 		4, 		0, 		4, 		0, 		1, 		2, 		3, 		5, 		0, 		1], #ENUM
+	[	0, 		0, 		0, 		0, 		0, 		4, 		0, 		4, 		0, 		1, 		2, 		3, 		5, 		0, 		0], #MES_H
+	[	0, 		0, 		0, 		0, 		0, 		4, 		0, 		4, 		0, 		1, 		2, 		3, 		5, 		0, 		1], #MES_T
+	[	0, 		0, 		0, 		0, 		0, 		0, 		4, 		0, 		4, 		0, 		0, 		0, 		0, 		0, 		0], #ONEOF_H
+	[	0, 		0, 		0, 		0, 		0, 		4, 		0, 		4, 		0, 		1, 		2, 		3, 		5, 		0, 		1], #ONEOF_T
+	[	0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0]  #END
+	]
+	
+	class Construction:
+		func _init(b, e, d):
+			begin_token_index = b
+			end_token_index = e
+			description = d
+		var begin_token_index
+		var end_token_index
+		var description
+	
+	class TranslationResult:
+		var constructions = []
+		var done = false
+		var error_description_id = -1
+		var error_description_text = ""
+		var parse_token_index = 0
+		var error_token_index = 0
+	
+	func analyze_tokens(tokens):
+		var i = 0
+		var result = TranslationResult.new()
+		var comp
+		var cur_template_id = 0
+		var error = false
+		var template_index
+		var comp_set = CompareSettings.new(result.constructions.size(), 0, -1)
+		comp = description_compare(DESCRIPTION[cur_template_id], tokens, i, comp_set)
+		if comp.state == COMPARE_STATE.DONE:
+			i = comp.index
+			while true:
+				var end = true
+				var find = false
+				for j in range(TRANSLATION_TABLE[cur_template_id].size()):
+					template_index = j
+					if j == DESCRIPTION.size() - 1 && i < tokens.size():
+						end = false
+						if result.error_description_id < 0:
+							error = true
+						break
+					if TRANSLATION_TABLE[cur_template_id][j] > 0:
+						end = false
+						comp_set.construction_index = result.constructions.size()
+						comp = description_compare(DESCRIPTION[j], tokens, i, comp_set)
+						if comp.state == COMPARE_STATE.DONE:
+							if TRANSLATION_TABLE[cur_template_id][j] == JUMP.NESTED_INCREMENT:
+								comp_set.nesting += 1
+							elif TRANSLATION_TABLE[cur_template_id][j] == JUMP.NESTED_DECREMENT:
+								comp_set.nesting -= 1
+								if comp_set.nesting < 0:
+									error = true
+									break
+							elif TRANSLATION_TABLE[cur_template_id][j] == JUMP.MUST_NESTED_SIMPLE:
+								if comp_set.nesting <= 0:
+									error = true
+									break
+							elif TRANSLATION_TABLE[cur_template_id][j] == JUMP.MUST_NESTED_INCREMENT:
+								if comp_set.nesting <= 0:
+									error = true
+									break
+								comp_set.nesting += 1
+							elif TRANSLATION_TABLE[cur_template_id][j] == JUMP.MUST_NESTED_DECREMENT:
+								comp_set.nesting -= 1
+								if comp_set.nesting <= 0:
+									error = true
+									break
+							result.constructions.append(Construction.new(i, comp.index, j))
+							find = true
+							i = comp.index
+							cur_template_id = j
+							if i == tokens.size():
+								if TRANSLATION_TABLE[cur_template_id][DESCRIPTION.size() - 1] == JUMP.SIMPLE:
+									if comp_set.nesting == 0:
+										end = true
+									else:
+										error = true
+								else:
+									error = true
+							elif i > tokens.size():
+								error = true
+							break
+						elif comp.state == COMPARE_STATE.INCOMPLETE:
+							error = true
+							break
+						elif comp.state == COMPARE_STATE.ERROR_VALUE:
+							error = true
+							break
+				if error:
+					result.error_description_text = comp.description
+					result.error_description_id = template_index
+					result.parse_token_index = i
+					if comp.index >= tokens.size():
+						result.error_token_index = tokens.size() - 1
+					else:
+						result.error_token_index = comp.index
+				if end:
+					result.done = true
+					result.error_description_id = -1
+					break
+				if !find:
+					break
+		return result
+	
+	enum CLASS_TYPE {
+		ENUM = 0,
+		MESSAGE = 1,
+		MAP = 2
+	}
+	
+	enum FIELD_TYPE {
+		UNDEFINED = -1,
+		INT32 = 0,
+		SINT32 = 1,
+		UINT32 = 2,
+		INT64 = 3,
+		SINT64 = 4,
+		UINT64 = 5,
+		BOOL = 6,
+		ENUM = 7,
+		FIXED32 = 8,
+		SFIXED32 = 9,
+		FLOAT = 10,
+		FIXED64 = 11,
+		SFIXED64 = 12,
+		DOUBLE = 13,
+		STRING = 14,
+		BYTES = 15,
+		MESSAGE = 16,
+		MAP = 17
+	}
+	
+	enum FIELD_QUALIFICATOR {
+		OPTIONAL = 0,
+		REQUIRED = 1,
+		REPEATED = 2,
+		RESERVED = 3
+	}
+	
+	enum FIELD_OPTION {
+		PACKED = 0,
+		NOT_PACKED = 1
+	}
+	
+	class ASTClass:
+		func copy():
+			pass
+	
+	class ASTClass:
+		func _init(n, t, p, pn, o, ci):
+			name = n
+			type = t
+			parent_index = p
+			parent_name = pn
+			option = o
+			construction_index = ci
+			values = []
+		
+		var name
+		var type
+		var parent_index
+		var parent_name
+		var option
+		var construction_index
+		var values
+		
+		func copy():
+			var res = ASTClass.new(name, type, parent_index, parent_name, option, construction_index)
+			for v in values:
+				res.values.append(v.copy())
+			return res
+	
+	class ASTEnumValue:
+		func copy():
+			pass
+	
+	class ASTEnumValue:
+		func _init(n, v):
+			name = n
+			value = v
+		
+		var name
+		var value
+		
+		func copy():
+			return ASTEnumValue.new(name, value)
+	
+	class ASTField:
+		func copy():
+			pass
+	
+	class ASTField:
+		func _init(t, n, tn, p, q, o, ci):
+			tag = t
+			name = n
+			type_name = tn
+			parent_class_id = p
+			qualificator = q
+			option = o
+			construction_index = ci
+		
+		var tag
+		var name
+		var type_name
+		var parent_class_id
+		var qualificator
+		var option
+		var construction_index
+		var field_type = FIELD_TYPE.UNDEFINED
+		var type_class_id = -1
+		
+		func copy():
+			var res = ASTField.new(tag, name, type_name, parent_class_id, qualificator, option, construction_index)
+			res.field_type = field_type
+			res.type_class_id = type_class_id
+			return res
+	
+	enum AST_GROUP_RULE {
+		ONEOF = 0,
+		ALL = 1
+	}
+	
+	class ASTFieldGroup:
+		func copy():
+			pass
+	
+	class ASTFieldGroup:
+		func _init(n, pi, r):
+			name = n
+			parent_class_id = pi
+			rule = r
+			opened = true
+			
+		var name
+		var parent_class_id
+		var rule
+		var field_indexes = []
+		var opened
+		
+		func copy():
+			var res = ASTFieldGroup.new(name, parent_class_id, rule)
+			res.opened = opened
+			for fi in field_indexes:
+				res.field_indexes.append(fi)
+			return res
+	
+	class ASTImport:
+		func _init(a_path, a_public, sha):
+			path = a_path
+			public = a_public
+			sha256 = sha
+			
+		var path
+		var public
+		var sha256
+	
+	var class_table = []
+	var field_table = []
+	var group_table = []
+	var import_table = []
+	var proto_version = 0
+	
+	class DescriptionResult:
+		func _init(s = true, e = null, d = ""):
+			success = s
+			error = e
+			description = d
+		var success
+		var error
+		var description
+	
+	static func get_text_from_token(string_token):
+		return string_token.text.substr(1, string_token.text.length() - 2)
+	
+	func desc_syntax(indexed_tokens, settings):
+		var result = DescriptionResult.new()
+		var s = get_text_from_token(indexed_tokens[0].token)
+		if s == "proto2":
+			proto_version = 2
+		elif s == "proto3":
+			proto_version = 3
+		else:
+			result.success = false
+			result.error = indexed_tokens[0].index
+			result.description = "Unspecified version of the protocol. Use \"proto2\" or \"proto3\" syntax string."
+		return result
+		
+	func desc_import(indexed_tokens, settings):
+		var result = DescriptionResult.new()
+		var offset = 0
+		var public = false
+		if indexed_tokens[offset].token.id == TOKEN_ID.IMPORT_QUALIFICATION:
+			if indexed_tokens[offset].token.text == "public":
+				public = true
+			offset += 1
+		var f_name = path_dir + get_text_from_token(indexed_tokens[offset].token)
+		var file = File.new()
+		var sha = file.get_sha256(f_name)
+		if file.file_exists(f_name):
+			for i in import_table:
+				if i.path == f_name:
+					result.success = false
+					result.error = indexed_tokens[offset].index
+					result.description = "File '" + f_name + "' already imported."
+					return result
+				if i.sha256 == sha:
+					result.success = false
+					result.error = indexed_tokens[offset].index
+					result.description = "File '" + f_name + "' with matching SHA256 already imported."
+					return result
+			import_table.append(ASTImport.new(f_name, public, sha))
+		else:
+			result.success = false
+			result.error = indexed_tokens[offset].index
+			result.description = "Import file '" + f_name + "' not found."
+		return result
+		
+	func desc_package(indexed_tokens, settings):
+		print("UNRELEASED desc_package: ", indexed_tokens.size(), ", nesting: ", settings.nesting)
+		var result = DescriptionResult.new()
+		return result
+		
+	func desc_option(indexed_tokens, settings):
+		print("UNRELEASED desc_option: ", indexed_tokens.size(), ", nesting: ", settings.nesting)
+		var result = DescriptionResult.new()
+		return result
+	
+	func desc_field(indexed_tokens, settings):
+		var result = DescriptionResult.new()
+		var tag = null
+		var field_name = null
+		var type_name = null
+		var qualifcator = FIELD_QUALIFICATOR.OPTIONAL
+		var option
+		var offset = 0
+		
+		if proto_version == 3:
+			option = FIELD_OPTION.PACKED
+			if indexed_tokens[offset].token.id == TOKEN_ID.FIELD_QUALIFICATION:
+				if indexed_tokens[offset].token.text == "repeated":
+					qualifcator = FIELD_QUALIFICATOR.REPEATED
+				elif indexed_tokens[offset].token.text == "required" || indexed_tokens[offset].token.text == "optional":
+					result.success = false
+					result.error = indexed_tokens[offset].index
+					result.description = "Using the 'required' or 'optional' qualificator is unacceptable in Protobuf v3."
+					return result
+				offset += 1
+		if proto_version == 2:
+			option = FIELD_OPTION.NOT_PACKED
+			if !(group_table.size() > 0 && group_table[group_table.size() - 1].opened):
+				if indexed_tokens[offset].token.id == TOKEN_ID.FIELD_QUALIFICATION:
+					if indexed_tokens[offset].token.text == "repeated":
+						qualifcator = FIELD_QUALIFICATOR.REPEATED
+					elif indexed_tokens[offset].token.text == "required":
+						qualifcator = FIELD_QUALIFICATOR.REQUIRED
+					elif indexed_tokens[offset].token.text == "optional":
+						qualifcator = FIELD_QUALIFICATOR.OPTIONAL
+					offset += 1
+				else:
+					if class_table[settings.parent_index].type == CLASS_TYPE.MESSAGE:
+						result.success = false
+						result.error = indexed_tokens[offset].index
+						result.description = "Using the 'required', 'optional' or 'repeated' qualificator necessarily in Protobuf v2."
+						return result
+		type_name = indexed_tokens[offset].token.text; offset += 1
+		field_name = indexed_tokens[offset].token.text; offset += 1
+		tag = indexed_tokens[offset].token.text; offset += 1
+		
+		if indexed_tokens.size() == offset + 2:
+			if indexed_tokens[offset].token.text == "packed":
+				offset += 1
+				if indexed_tokens[offset].token.text == "true":
+					option = FIELD_OPTION.PACKED
+				else:
+					option = FIELD_OPTION.NOT_PACKED
+			else:
+				result.success = false
+				result.error = indexed_tokens[offset].index
+				result.description = "Undefined field option."
+				return result
+				
+		if group_table.size() > 0:
+			if group_table[group_table.size() - 1].opened:
+				if indexed_tokens[0].token.id == TOKEN_ID.FIELD_QUALIFICATION:
+					result.success = false
+					result.error = indexed_tokens[0].index
+					result.description = "Using the 'required', 'optional' or 'repeated' qualificator is unacceptable in 'OneOf' field."
+					return result
+				group_table[group_table.size() - 1].field_indexes.append(field_table.size())
+		field_table.append(ASTField.new(tag, field_name, type_name, settings.parent_index, qualifcator, option, settings.construction_index))
+		return result
+	
+	func desc_map_field(indexed_tokens, settings):
+		var result = DescriptionResult.new()
+		var tag = null
+		var field_name = null
+		var type_name = null
+		var key_type_name = null
+		var qualifcator = FIELD_QUALIFICATOR.REPEATED
+		var option
+		var offset = 0
+		
+		if proto_version == 3:
+			option = FIELD_OPTION.PACKED
+		if proto_version == 2:
+			option = FIELD_OPTION.NOT_PACKED
+			
+		key_type_name = indexed_tokens[offset].token.text; offset += 1
+		if key_type_name == "float" || key_type_name == "double" || key_type_name == "bytes":
+			result.success = false
+			result.error = indexed_tokens[offset - 1].index
+			result.description = "Map 'key_type' can't be floating point types and bytes."
+		type_name = indexed_tokens[offset].token.text; offset += 1
+		field_name = indexed_tokens[offset].token.text; offset += 1
+		tag = indexed_tokens[offset].token.text; offset += 1
+		
+		if indexed_tokens.size() == offset + 2:
+			if indexed_tokens[offset].token.text == "packed":
+				offset += 1
+				if indexed_tokens[offset] == "true":
+					option = FIELD_OPTION.PACKED
+				else:
+					option = FIELD_OPTION.NOT_PACKED
+			else:
+				result.success = false
+				result.error = indexed_tokens[offset].index
+				result.description = "Undefined field option."
+		
+		if group_table.size() > 0:
+			if group_table[group_table.size() - 1].opened:
+				group_table[group_table.size() - 1].field_indexes.append(field_table.size())
+				
+		class_table.append(ASTClass.new("map_type_" + field_name, CLASS_TYPE.MAP, settings.parent_index, settings.parent_name, null, settings.construction_index))
+		field_table.append(ASTField.new(tag, field_name, "map_type_" + field_name, settings.parent_index, qualifcator, option, settings.construction_index))
+		
+		field_table.append(ASTField.new(1, "key", key_type_name, class_table.size() - 1, FIELD_QUALIFICATOR.REQUIRED, option, settings.construction_index))
+		field_table.append(ASTField.new(2, "value", type_name, class_table.size() - 1, FIELD_QUALIFICATOR.REQUIRED, option, settings.construction_index))
+		
+		return result
+	
+	func desc_enum(indexed_tokens, settings):
+		var result = DescriptionResult.new()
+		var type_name = null
+		var option = null
+		var offset = 0
+		
+		type_name = indexed_tokens[offset].token.text; offset += 1
+		if indexed_tokens[offset].token.id == TOKEN_ID.ENUM_OPTION:
+			if indexed_tokens[offset].token.text == "allow_alias" && indexed_tokens[offset + 1].token.text == "true":
+				option = "allow_alias"
+			offset += 2
+		var value
+		var enum_class = ASTClass.new(type_name, CLASS_TYPE.ENUM, settings.parent_index, settings.parent_name, option, settings.construction_index)
+		var first_value = true
+		while offset < indexed_tokens.size():
+			if first_value:
+				if indexed_tokens[offset + 1].token.text != "0":
+					result.success = false
+					result.error = indexed_tokens[offset + 1].index
+					result.description = "For Enums, the default value is the first defined enum value, which must be 0."
+					break
+				first_value = false
+			#if indexed_tokens[offset + 1].token.text[0] == "+" || indexed_tokens[offset + 1].token.text[0] == "-":
+			#	result.success = false
+			#	result.error = indexed_tokens[offset + 1].index
+			#	result.description = "For Enums, signed values are not allowed."
+			#	break
+			value = ASTEnumValue.new(indexed_tokens[offset].token.text, indexed_tokens[offset + 1].token.text)
+			enum_class.values.append(value)
+			offset += 2
+		
+		class_table.append(enum_class)
+		return result
+		
+	func desc_message_head(indexed_tokens, settings):
+		var result = DescriptionResult.new()
+		class_table.append(ASTClass.new(indexed_tokens[0].token.text, CLASS_TYPE.MESSAGE, settings.parent_index, settings.parent_name, null, settings.construction_index))
+		settings.parent_index = class_table.size() - 1
+		settings.parent_name = settings.parent_name + "." + indexed_tokens[0].token.text
+		return result
+		
+	func desc_message_tail(indexed_tokens, settings):
+		settings.parent_index = class_table[settings.parent_index].parent_index
+		settings.parent_name = class_table[settings.parent_index + 1].parent_name
+		var result = DescriptionResult.new()
+		return result
+	
+	func desc_oneof_head(indexed_tokens, settings):
+		var result = DescriptionResult.new()
+		for g in group_table:
+			if g.parent_class_id == settings.parent_index && g.name == indexed_tokens[0].token.text:
+				result.success = false
+				result.error = indexed_tokens[0].index
+				result.description = "OneOf name must be unique."
+				return result
+		group_table.append(ASTFieldGroup.new(indexed_tokens[0].token.text, settings.parent_index, AST_GROUP_RULE.ONEOF))
+		return result
+		
+	func desc_oneof_tail(indexed_tokens, settings):
+		group_table[group_table.size() - 1].opened = false
+		var result = DescriptionResult.new()
+		return result
+		
+	func analyze():
+		var analyze_result = AnalyzeResult.new()
+		analyze_result.doc = document
+		analyze_result.classes = class_table
+		analyze_result.fields = field_table
+		analyze_result.groups = group_table
+		analyze_result.state = false
+		var result = tokenizer()
+		if result.errors.size() > 0:
+			for v in result.errors:
+				var spos = Helper.str_pos(document.text, v.position)
+				var err_text = "Unexpected token intersection " + "'" + document.text.substr(v.position.begin, spos.length) + "'"
+				print(Helper.error_string(document.name, spos.str_num, spos.column, err_text))
+		else:
+			var integrity = check_tokens_integrity(result.tokens, document.text.length() - 1)
+			if integrity.size() > 0:
+				for v in integrity:
+					var spos = Helper.str_pos(document.text, TokenPosition.new(v.begin, v.end))
+					var err_text = "Unexpected token " + "'" + document.text.substr(v.begin, spos.length) + "'"
+					print(Helper.error_string(document.name, spos.str_num, spos.column, err_text))
+			else:
+				analyze_result.tokens = result.tokens
+				comment_space_processing(result.tokens)
+				var syntax = analyze_tokens(result.tokens)
+				if !syntax.done:
+					var pos_main = Helper.text_pos(result.tokens, syntax.parse_token_index)
+					var pos_inner = Helper.text_pos(result.tokens, syntax.error_token_index)
+					var spos_main = Helper.str_pos(document.text, pos_main)
+					var spos_inner = Helper.str_pos(document.text, pos_inner)
+					var err_text = "Syntax error in construction '" + result.tokens[syntax.parse_token_index].text + "'. "
+					err_text += "Unacceptable use '" + result.tokens[syntax.error_token_index].text + "' at:" + String(spos_inner.str_num) + ":" + String(spos_inner.column)
+					err_text += "\n" + syntax.error_description_text
+					print(Helper.error_string(document.name, spos_main.str_num, spos_main.column, err_text))
+				else:
+					analyze_result.version = proto_version
+					analyze_result.imports = import_table
+					analyze_result.syntax = syntax
+					analyze_result.state = true
+		return analyze_result
+
+class Semantic:
+	
+	var class_table
+	var field_table
+	var group_table
+	var syntax
+	var tokens
+	var document
+	
+	func _init(analyze_result):
+		class_table = analyze_result.classes
+		field_table = analyze_result.fields
+		group_table = analyze_result.groups
+		syntax = analyze_result.syntax
+		tokens = analyze_result.tokens
+		document = analyze_result.doc
+		
+	
+	enum CHECK_SUBJECT {
+		CLASS_NAME = 0,
+		FIELD_NAME = 1,
+		FIELD_TAG_NUMBER = 2,
+		FIELD_TYPE = 3
+	}
+	
+	var STRING_FIELD_TYPE = {
+		"int32": Analysis.FIELD_TYPE.INT32,
+		"sint32": Analysis.FIELD_TYPE.SINT32,
+		"uint32": Analysis.FIELD_TYPE.UINT32,
+		"int64": Analysis.FIELD_TYPE.INT64,
+		"sint64": Analysis.FIELD_TYPE.SINT64,
+		"uint64": Analysis.FIELD_TYPE.UINT64,
+		"bool": Analysis.FIELD_TYPE.BOOL,
+		"fixed32": Analysis.FIELD_TYPE.FIXED32,
+		"sfixed32": Analysis.FIELD_TYPE.SFIXED32,
+		"float": Analysis.FIELD_TYPE.FLOAT,
+		"fixed64": Analysis.FIELD_TYPE.FIXED64,
+		"sfixed64": Analysis.FIELD_TYPE.SFIXED64,
+		"double": Analysis.FIELD_TYPE.DOUBLE,
+		"string": Analysis.FIELD_TYPE.STRING,
+		"bytes": Analysis.FIELD_TYPE.BYTES,
+		"map": Analysis.FIELD_TYPE.MAP
+	}
+	
+	class CheckResult:
+		func _init(mci, aci, ti, s):
+			main_construction_index = mci
+			associated_construction_index = aci
+			table_index = ti
+			subject = s
+			
+		var main_construction_index = -1
+		var associated_construction_index = -1
+		var table_index = -1
+		var subject
+	
+	func check_class_names():
+		var result = []
+		for i in range(class_table.size()):
+			var class_name = class_table[i].parent_name + "." + class_table[i].name
+			for j in range(i + 1, class_table.size(), 1):
+				var inner_name = class_table[j].parent_name + "." + class_table[j].name
+				if inner_name == class_name:
+					var check = CheckResult.new(class_table[j].construction_index, class_table[i].construction_index, j, CHECK_SUBJECT.CLASS_NAME)
+					result.append(check)
+					break
+		return result
+	
+	func check_field_names():
+		var result = []
+		for i in range(field_table.size()):
+			var class_name = class_table[field_table[i].parent_class_id].parent_name + "." + class_table[field_table[i].parent_class_id].name
+			for j in range(i + 1, field_table.size(), 1):
+				var inner_name = class_table[field_table[j].parent_class_id].parent_name + "." + class_table[field_table[j].parent_class_id].name
+				if inner_name == class_name:
+					if field_table[i].name == field_table[j].name:
+						var check = CheckResult.new(field_table[j].construction_index, field_table[i].construction_index, j, CHECK_SUBJECT.FIELD_NAME)
+						result.append(check)
+						break
+					if field_table[i].tag == field_table[j].tag:
+						var check = CheckResult.new(field_table[j].construction_index, field_table[i].construction_index, j, CHECK_SUBJECT.FIELD_TAG_NUMBER)
+						result.append(check)
+						break
+		return result
+	
+	func find_full_class_name(class_name):
+		for i in range(class_table.size()):
+			if class_name == class_table[i].parent_name + "." + class_table[i].name:
+				return i
+		return -1
+	
+	func find_class_name(class_name):
+		for i in range(class_table.size()):
+			if class_name == class_table[i].name:
+				return i
+		return -1
+	
+	func get_class_childs(class_index):
+		var result = []
+		for i in range(class_table.size()):
+			if class_table[i].parent_index == class_index:
+				result.append(i)
+		return result
+	
+	func find_in_childs(class_name, child_indexes):
+		for c in child_indexes:
+			if class_name == class_table[c].name:
+				return c
+		return -1
+	
+	func determine_field_types():
+		var result = []
+		for f in field_table:
+			if STRING_FIELD_TYPE.has(f.type_name):
+				f.field_type = STRING_FIELD_TYPE[f.type_name]
+			else:
+				if f.type_name[0] == ".":
+					f.type_class_id = find_full_class_name(f.type_name)
+				else:
+					var splited_name = f.type_name.split(".", false)
+					var cur_class_index = f.parent_class_id
+					var exit = false
+					while(true):
+						var find = false
+						if cur_class_index == -1:
+							break
+						for n in splited_name:
+							var childs_and_parent = get_class_childs(cur_class_index)
+							var res_index = find_in_childs(n, childs_and_parent)
+							if res_index >= 0:
+								find = true
+								cur_class_index = res_index
+							else:
+								if find:
+									exit = true
+								else:
+									cur_class_index = class_table[cur_class_index].parent_index
+								break
+						if exit:
+							break
+						if find:
+							f.type_class_id = cur_class_index
+							break
+				if f.type_class_id == -1:
+					f.type_class_id = find_full_class_name("." + f.type_name)
+		for i in range(field_table.size()):
+			if field_table[i].field_type == Analysis.FIELD_TYPE.UNDEFINED:
+				if field_table[i].type_class_id == -1:
+					result.append(CheckResult.new(field_table[i].construction_index, field_table[i].construction_index, i, CHECK_SUBJECT.FIELD_TYPE))
+				else:
+					if class_table[field_table[i].type_class_id].type == Analysis.CLASS_TYPE.ENUM:
+						field_table[i].field_type = Analysis.FIELD_TYPE.ENUM
+					elif class_table[field_table[i].type_class_id].type == Analysis.CLASS_TYPE.MESSAGE:
+						field_table[i].field_type = Analysis.FIELD_TYPE.MESSAGE
+					elif class_table[field_table[i].type_class_id].type == Analysis.CLASS_TYPE.MAP:
+						field_table[i].field_type = Analysis.FIELD_TYPE.MAP
+					else:
+						result.append(CheckResult.new(field_table[i].construction_index, field_table[i].construction_index, i, CHECK_SUBJECT.FIELD_TYPE))
+		return result
+	
+	func check_constructions():
+		var cl = check_class_names()
+		var fl = check_field_names()
+		var ft = determine_field_types()
+		return cl + fl + ft
+		
+	func check():
+		var check_result = check_constructions()
+		if check_result.size() == 0:
+			return true
+		else:
+			for v in check_result:
+				var main_tok = syntax.constructions[v.main_construction_index].begin_token_index
+				var assoc_tok = syntax.constructions[v.associated_construction_index].begin_token_index
+				var main_err_pos = Helper.str_pos(document.text, Helper.text_pos(tokens, main_tok))
+				var assoc_err_pos = Helper.str_pos(document.text, Helper.text_pos(tokens, assoc_tok))
+				var err_text
+				if v.subject == CHECK_SUBJECT.CLASS_NAME:
+					var class_type = "Undefined"
+					if class_table[v.table_index].type == Analysis.CLASS_TYPE.ENUM:
+						class_type = "Enum"
+					elif class_table[v.table_index].type == Analysis.CLASS_TYPE.MESSAGE:
+						class_type = "Message"
+					elif class_table[v.table_index].type == Analysis.CLASS_TYPE.MAP:
+						class_type = "Map"
+					err_text = class_type + " name '" + class_table[v.table_index].name + "' is already defined at:" + String(assoc_err_pos.str_num) + ":" + String(assoc_err_pos.column)
+				elif v.subject == CHECK_SUBJECT.FIELD_NAME:
+					err_text = "Field name '" + field_table[v.table_index].name + "' is already defined at:" + String(assoc_err_pos.str_num) + ":" + String(assoc_err_pos.column)
+				elif v.subject == CHECK_SUBJECT.FIELD_TAG_NUMBER:
+					err_text = "Tag number '" + field_table[v.table_index].tag + "' is already defined at:" + String(assoc_err_pos.str_num) + ":" + String(assoc_err_pos.column)
+				elif v.subject == CHECK_SUBJECT.FIELD_TYPE:
+					err_text = "Type '" + field_table[v.table_index].type_name + "' of the '" + field_table[v.table_index].name + "' field undefined"
+				else:
+					err_text = "Undefined error"
+				print(Helper.error_string(document.name, main_err_pos.str_num, main_err_pos.column, err_text))
+		return false
+
+class Translator:
+	
+	var class_table
+	var field_table
+	var group_table
+	var proto_version
+	
+	func _init(analyzer_result):
+		class_table = analyzer_result.classes
+		field_table = analyzer_result.fields
+		group_table = analyzer_result.groups
+		proto_version = analyzer_result.version
+	
+	func tabulate(text, nesting):
+		var tab = ""
+		for i in range(nesting):
+			tab += "\t"
+		return tab + text
+	
+	func default_dict_text():
+		if proto_version == 2:
+			return "DEFAULT_VALUES_2"
+		elif proto_version == 3:
+			return "DEFAULT_VALUES_3"
+		return "TRANSLATION_ERROR"
+	
+	func generate_field_type(field):
+		var text = "PB_DATA_TYPE."
+		if field.field_type == Analysis.FIELD_TYPE.INT32:
+			return text + "INT32"
+		elif field.field_type == Analysis.FIELD_TYPE.SINT32:
+			return text + "SINT32"
+		elif field.field_type == Analysis.FIELD_TYPE.UINT32:
+			return text + "UINT32"
+		elif field.field_type == Analysis.FIELD_TYPE.INT64:
+			return text + "INT64"
+		elif field.field_type == Analysis.FIELD_TYPE.SINT64:
+			return text + "SINT64"
+		elif field.field_type == Analysis.FIELD_TYPE.UINT64:
+			return text + "UINT64"
+		elif field.field_type == Analysis.FIELD_TYPE.BOOL:
+			return text + "BOOL"
+		elif field.field_type == Analysis.FIELD_TYPE.ENUM:
+			return text + "ENUM"
+		elif field.field_type == Analysis.FIELD_TYPE.FIXED32:
+			return text + "FIXED32"
+		elif field.field_type == Analysis.FIELD_TYPE.SFIXED32:
+			return text + "SFIXED32"
+		elif field.field_type == Analysis.FIELD_TYPE.FLOAT:
+			return text + "FLOAT"
+		elif field.field_type == Analysis.FIELD_TYPE.FIXED64:
+			return text + "FIXED64"
+		elif field.field_type == Analysis.FIELD_TYPE.SFIXED64:
+			return text + "SFIXED64"
+		elif field.field_type == Analysis.FIELD_TYPE.DOUBLE:
+			return text + "DOUBLE"
+		elif field.field_type == Analysis.FIELD_TYPE.STRING:
+			return text + "STRING"
+		elif field.field_type == Analysis.FIELD_TYPE.BYTES:
+			return text + "BYTES"
+		elif field.field_type == Analysis.FIELD_TYPE.MESSAGE:
+			return text + "MESSAGE"
+		elif field.field_type == Analysis.FIELD_TYPE.MAP:
+			return text + "MAP"
+		return text
+	
+	func generate_field_rule(field):
+		var text = "PB_RULE."
+		if field.qualificator == Analysis.FIELD_QUALIFICATOR.OPTIONAL:
+			return text + "OPTIONAL"
+		elif field.qualificator == Analysis.FIELD_QUALIFICATOR.REQUIRED:
+			return text + "REQUIRED"
+		elif field.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
+			return text + "REPEATED"
+		elif field.qualificator == Analysis.FIELD_QUALIFICATOR.RESERVED:
+			return text + "RESERVED"
+		return text
+	
+	func generate_field_constructor(field_index, nesting):
+		var text = ""
+		var f = field_table[field_index]
+		var field_name = "_" + f.name
+		var pbfield_text = field_name + " = PBField.new("
+		pbfield_text += generate_field_type(f) + ", "
+		pbfield_text += generate_field_rule(f) + ", "
+		pbfield_text += String(f.tag) + ", "
+		if f.option == Analysis.FIELD_OPTION.PACKED:
+			pbfield_text += "true"
+		elif f.option == Analysis.FIELD_OPTION.NOT_PACKED:
+			pbfield_text += "false"
+		if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
+			pbfield_text += ", []"
+		else:
+			pbfield_text += ", " + default_dict_text() + "[" + generate_field_type(f) + "]"
+		pbfield_text += ")\n"
+		text += tabulate(pbfield_text, nesting)
+		text += tabulate("service = PBServiceField.new()\n", nesting)
+		text += tabulate("service.field = " + field_name + "\n", nesting)
+		if f.field_type == Analysis.FIELD_TYPE.MESSAGE:
+			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
+				text += tabulate("service.func_ref = funcref(self, \"add" + field_name + "\")\n", nesting)
+			else:
+				text += tabulate("service.func_ref = funcref(self, \"new" + field_name + "\")\n", nesting)
+		elif f.field_type == Analysis.FIELD_TYPE.MAP:
+			text += tabulate("service.func_ref = funcref(self, \"add_empty" + field_name + "\")\n", nesting)
+		text += tabulate("data[" + field_name + ".tag] = service\n", nesting)
+		
+		return text
+	
+	func generate_group_clear(field_index, nesting):
+		for g in group_table:
+			var text = ""
+			var find = false
+			if g.parent_class_id == field_table[field_index].parent_class_id:
+				for i in g.field_indexes:
+					if field_index == i:
+						find = true
+					else:
+						text += tabulate("_" + field_table[i].name + ".value = " + default_dict_text() + "[" + generate_field_type(field_table[i]) + "]\n", nesting)
+			if find:
+				return text
+		return ""
+	
+	func generate_has_oneof(field_index, nesting):
+		for g in group_table:
+			var text = ""
+			if g.parent_class_id == field_table[field_index].parent_class_id:
+				for i in g.field_indexes:
+					if field_index == i:
+						text += tabulate("func has_" + field_table[i].name + "():\n", nesting)
+						nesting += 1
+						text += tabulate("if data[" + field_table[i].tag + "].state == PB_SERVICE_STATE.FILLED:\n", nesting)
+						nesting += 1
+						text += tabulate("return true\n", nesting)
+						nesting -= 1
+						text += tabulate("return false\n", nesting)
+						return text
+		return ""
+	
+	func generate_field(field_index, nesting):
+		var text = ""
+		var f = field_table[field_index]
+		text += tabulate("var _" + f.name + "\n", nesting)
+		if f.field_type == Analysis.FIELD_TYPE.MESSAGE:
+			var class_name = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
+			class_name = class_name.substr(1, class_name.length() - 1)
+			text += generate_has_oneof(field_index, nesting)
+			text += tabulate("func get_" + f.name + "():\n", nesting)
+			nesting += 1
+			text += tabulate("return _" + f.name + ".value\n", nesting)
+			nesting -= 1
+			text += tabulate("func clear_" + f.name + "():\n", nesting)
+			nesting += 1
+			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
+			nesting -= 1
+			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
+				text += tabulate("func add_" + f.name + "():\n", nesting)
+				nesting += 1
+				text += tabulate("var element = " + class_name + ".new()\n", nesting)
+				text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
+				text += tabulate("return element\n", nesting)
+			else:
+				text += tabulate("func new_" + f.name + "():\n", nesting)
+				nesting += 1
+				text += generate_group_clear(field_index, nesting)
+				text += tabulate("_" + f.name + ".value = " + class_name + ".new()\n", nesting)
+				text += tabulate("return _" + f.name + ".value\n", nesting)
+		elif f.field_type == Analysis.FIELD_TYPE.MAP:
+			var class_name = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
+			class_name = class_name.substr(1, class_name.length() - 1)
+			text += generate_has_oneof(field_index, nesting)
+			text += tabulate("func get_raw_" + f.name + "():\n", nesting)
+			nesting += 1
+			text += tabulate("return _" + f.name + ".value\n", nesting)
+			nesting -= 1
+			text += tabulate("func get_" + f.name + "():\n", nesting)
+			nesting += 1
+			text += tabulate("return PBPacker.construct_map(_" + f.name + ".value)\n", nesting)
+			nesting -= 1
+			text += tabulate("func clear_" + f.name + "():\n", nesting)
+			nesting += 1
+			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
+			nesting -= 1
+			for i in range(field_table.size()):
+				if field_table[i].parent_class_id == f.type_class_id && field_table[i].name == "value":
+					text += tabulate("func add_empty_" + f.name + "():\n", nesting)
+					nesting += 1
+					text += generate_group_clear(field_index, nesting)
+					text += tabulate("var element = " + class_name + ".new()\n", nesting)
+					text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
+					text += tabulate("return element\n", nesting)
+					nesting -= 1
+					if field_table[i].field_type == Analysis.FIELD_TYPE.MESSAGE:
+						text += tabulate("func add_" + f.name + "(a_key):\n", nesting)
+						nesting += 1
+						text += generate_group_clear(field_index, nesting)
+						text += tabulate("var element = " + class_name + ".new()\n", nesting)
+						text += tabulate("element.set_key(a_key)\n", nesting)
+						text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
+						text += tabulate("return element.new_value()\n", nesting)
+					else:
+						text += tabulate("func add_" + f.name + "(a_key, a_value):\n", nesting)
+						nesting += 1
+						text += generate_group_clear(field_index, nesting)
+						text += tabulate("var element = " + class_name + ".new()\n", nesting)
+						text += tabulate("element.set_key(a_key)\n", nesting)
+						text += tabulate("element.set_value(a_value)\n", nesting)
+						text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
+					break
+		else:
+			text += generate_has_oneof(field_index, nesting)
+			text += tabulate("func get_" + f.name + "():\n", nesting)
+			nesting += 1
+			text += tabulate("return _" + f.name + ".value\n", nesting)
+			nesting -= 1
+			text += tabulate("func clear_" + f.name + "():\n", nesting)
+			nesting += 1
+			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
+			nesting -= 1
+			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
+				text += tabulate("func add_" + f.name + "(value):\n", nesting)
+				nesting += 1
+				text += tabulate("_" + f.name + ".value.append(value)\n", nesting)
+			else:
+				text += tabulate("func set_" + f.name + "(value):\n", nesting)
+				nesting += 1
+				text += generate_group_clear(field_index, nesting)
+				text += tabulate("_" + f.name + ".value = value\n", nesting)
+		return text
+	
+	func generate_class(class_index, nesting):
+		var text = []
+		text.append("")
+		text.append("")
+		if class_table[class_index].type == Analysis.CLASS_TYPE.MESSAGE || class_table[class_index].type == Analysis.CLASS_TYPE.MAP:
+			var cls_pref = ""
+			cls_pref += tabulate("class " + class_table[class_index].name + ":\n", nesting)
+			nesting += 1
+			cls_pref += tabulate("func _init():\n", nesting)
+			text[0] += cls_pref
+			text[1] += cls_pref
+			nesting += 1
+			text[1] += tabulate("pass\n", nesting)
+			text[1] += tabulate("\n", nesting)
+			text[0] += tabulate("var service\n", nesting)
+			text[0] += tabulate("\n", nesting)
+			var field_text = ""
+			for i in range(field_table.size()):
+				if field_table[i].parent_class_id == class_index:
+					text[0] += generate_field_constructor(i, nesting)
+					text[0] += tabulate("\n", nesting)
+					field_text += generate_field(i, nesting - 1)
+					field_text += tabulate("\n", nesting - 1)
+			nesting -= 1
+			text[0] += tabulate("var data = {}\n", nesting)
+			text[0] += tabulate("\n", nesting)
+			text[0] += field_text
+			for j in range(class_table.size()):
+				if class_table[j].parent_index == class_index:
+					var cl_text = generate_class(j, nesting)
+					text[0] += cl_text[0]
+					text[1] += cl_text[1]
+					if class_table[j].type == Analysis.CLASS_TYPE.MESSAGE || class_table[j].type == Analysis.CLASS_TYPE.MAP:
+						text[0] += generate_class_services(nesting + 1)
+						text[0] += tabulate("\n", nesting + 1)
+		elif class_table[class_index].type == Analysis.CLASS_TYPE.ENUM:
+			text[0] += tabulate("enum " + class_table[class_index].name + " {\n", nesting)
+			nesting += 1
+			for en in range(class_table[class_index].values.size()):
+				var enum_val = class_table[class_index].values[en].name + " = " + class_table[class_index].values[en].value
+				if en == class_table[class_index].values.size() - 1:
+					text[0] += tabulate(enum_val + "\n", nesting)
+				else:
+					text[0] += tabulate(enum_val + ",\n", nesting)
+			nesting -= 1
+			text[0] += tabulate("}\n", nesting)
+			text[0] += tabulate("\n", nesting)
+			
+		return text
+	
+	func generate_class_services(nesting):
+		var text = ""
+		text += tabulate("func to_bytes():\n", nesting)
+		nesting += 1
+		text += tabulate("return PBPacker.pack_message(data)\n", nesting)
+		text += tabulate("\n", nesting)
+		nesting -= 1
+		text += tabulate("func from_bytes(bytes, offset = 0, limit = -1):\n", nesting)
+		nesting += 1
+		text += tabulate("var cur_limit = bytes.size()\n", nesting)
+		text += tabulate("if limit != -1:\n", nesting)
+		nesting += 1
+		text += tabulate("cur_limit = limit\n", nesting)
+		nesting -= 1
+		text += tabulate("var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)\n", nesting)
+		text += tabulate("if result == cur_limit:\n", nesting)
+		nesting += 1
+		text += tabulate("if PBPacker.check_required(data):\n", nesting)
+		nesting += 1
+		text += tabulate("if limit == -1:\n", nesting)
+		nesting += 1
+		text += tabulate("return PB_ERR.NO_ERRORS\n", nesting)
+		nesting -= 2
+		text += tabulate("else:\n", nesting)
+		nesting += 1
+		text += tabulate("return PB_ERR.REQUIRED_FIELDS\n", nesting)
+		nesting -= 2
+		text += tabulate("elif limit == -1 && result > 0:\n", nesting)
+		nesting += 1
+		text += tabulate("return PB_ERR.PARSE_INCOMPLETE\n", nesting)
+		nesting -= 1
+		text += tabulate("return result\n", nesting)
+		return text
+	
+	func translate(file_name, core_file_name):
+		var file = File.new()
+		if file.open(file_name, File.WRITE) < 0:
+			print("File: '", file_name, "' save error.")
+			return false
+		var core_file = File.new()
+		if !core_file.file_exists(core_file_name):
+			print("File: '", core_file_name, "' not found.")
+			return false
+		if core_file.open(core_file_name, File.READ) < 0:
+			print("File: '", core_file_name, "' read error.")
+			return false
+		var core_text = core_file.get_as_text()
+		core_file.close()
+		var text = ""
+		var nesting = 0
+		text += "const PROTO_VERSION = " + String(proto_version) + "\n\n"
+		text += core_text + "\n\n\n"
+		text += "############### USER DATA BEGIN ################\n"
+		var cls_service = ""
+		var cls_user = ""
+		for i in range(class_table.size()):
+			if class_table[i].parent_index == -1:
+				var cls_text = generate_class(i, nesting)
+				cls_user += cls_text[0]
+				cls_service += cls_text[1]
+				if class_table[i].type == Analysis.CLASS_TYPE.MESSAGE:
+					nesting += 1
+					cls_user += generate_class_services(nesting)
+					cls_user += tabulate("\n", nesting)
+					nesting -= 1
+		text += cls_service
+		text += "\n\n"
+		text += cls_user
+		text += "################ USER DATA END #################\n"
+		file.store_string(text)
+		file.close()
+		if !file.file_exists(file_name):
+			print("File: '", file_name, "' save error.")
+			return false
+		return true
+	
+
+class ImportFile:
+	func _init(sha, a_path, a_parent):
+		sha256 = sha
+		path = a_path
+		parent_index = a_parent
+		
+	var sha256
+	var path
+	var parent_index
+
+func parse_all(analyzes, imports, path, full_name, parent_index):
+	var file = File.new()
+	if !file.file_exists(full_name):
+		print(full_name, ": not found.")
+		return false
+	if file.open(full_name, File.READ) < 0:
+		print(full_name, ": read error.")
+		return false
+	var doc = Document.new(full_name, file.get_as_text())
+	var sha = file.get_sha256(full_name)
+	file.close()
+	if !analyzes.has(sha):
+		print(full_name, ": parsing.")
+		var analysis = Analysis.new(path, doc)
+		var an_result = analysis.analyze()
+		if an_result.state:
+			analyzes[sha] = an_result
+			var parent = imports.size()
+			imports.append(ImportFile.new(sha, doc.name, parent_index))
+			for im in an_result.imports:
+				if !parse_all(analyzes, imports, path, im.path, parent):
+					return false
+		else:
+			print(doc.name + ": parsing error.")
+			return false
+	else:
+		print(full_name, ": retrieving data from cache.")
+		imports.append(ImportFile.new(sha, doc.name, parent_index))
+	return true
+
+func union_analyses(a1, a2, only_classes = true):
+	var class_offset = a1.classes.size()
+	for cl in a2.classes:
+		var cur_class = cl.copy()
+		if cur_class.parent_index != -1:
+			cur_class.parent_index += class_offset
+		a1.classes.append(cur_class)
+	if only_classes:
+		return
+	for fl in a2.fields:
+		var cur_field = fl.copy()
+		cur_field.parent_class_id += class_offset
+		cur_field.type_class_id = -1
+		a1.fields.append(cur_field)
+	var field_offset = a1.fields.size()
+	for gr in a2.groups:
+		var cur_group = gr.copy()
+		cur_group.parent_class_id += class_offset
+		var indexes = []
+		for i in cur_group.field_indexes:
+			indexes.append(i + field_offset)
+		cur_group.field_indexes = indexes
+		a1.groups.append(cur_group)
+
+func union_imports(analyzes, key, result, keys, nesting, use_public = true, only_classes = true):
+	nesting += 1
+	for im in analyzes[key].imports:
+		var find = false
+		for k in keys:
+			if im.sha256 == k:
+				find = true
+				break
+		if find:
+			continue
+		if (!use_public) || (use_public && ((im.public && nesting > 1) || nesting < 2)):
+			keys.append(im.sha256)
+			union_analyses(result, analyzes[im.sha256], only_classes)
+			union_imports(analyzes, im.sha256, result, keys, nesting, use_public, only_classes)
+
+func semantic_all(analyzes, imports):
+	for k in analyzes.keys():
+		print(analyzes[k].doc.name, ": analysis.")
+		var keys = []
+		var analyze = analyzes[k].soft_copy()
+		keys.append(k)
+		analyze.classes = []
+		for cl in analyzes[k].classes:
+			analyze.classes.append(cl.copy())
+		union_imports(analyzes, k, analyze, keys, 0)
+		var semantic = Semantic.new(analyze)
+		if !semantic.check():
+			print(analyzes[k].doc.name, ": analysis error.")
+			return false
+	return true
+	
+func translate_all(analyzes, file_name, core_file_name):
+	var first_key = analyzes.keys()[0]
+	var analyze = analyzes[first_key]
+	var keys = []
+	keys.append(first_key)
+	union_imports(analyzes, first_key, analyze, keys, 0, false, false)
+	print("Perform full semantic analysis.")
+	var semantic = Semantic.new(analyze)
+	if !semantic.check():
+		return false
+	print("Perform translation.")
+	var translator = Translator.new(analyze)
+	if !translator.translate(file_name, core_file_name):
+		return false
+	var first = true
+	return true
+
+func work(path, in_file, out_file, core_file):
+	var in_full_name = path + in_file
+	var imports = []
+	var analyzes = {}
+	
+	print("Compile source: '", in_full_name, "', output: '", out_file, "'.")
+	print("\n1. Parsing:")
+	if parse_all(analyzes, imports, path, in_full_name, -1):
+		print("* Parsing completed successfully. *")
+	else:
+		return false
+	print("\n2. Semantic analysis:")
+	if semantic_all(analyzes, imports):
+		print("* Semantic analysis completed successfully. *")
+	else:
+		return false
+	print("\n3. Output file creating:")
+	if translate_all(analyzes, out_file, core_file):
+		print("* Output file was created successfully. *")
+	else:
+		return false
+	return true
+
+func _ready():
+	
+	var path = "res://"
+	var in_file = "A.proto"
+	var out_file = "res://out.gd"
+	var core_file = "res://protobuf_core.gd"
+	work(path, in_file, out_file, core_file)
