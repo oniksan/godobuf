@@ -468,4 +468,6 @@ for inst in my_array_b:
 Google Protobuf: https://developers.google.com/protocol-buffers/docs/overview <br/>
 Godot engine: http://godotengine.org <br/>
 Godot docs: http://docs.godotengine.org/en/3.0/ <br/>
-Godobuf test suites: https://github.com/oniksan/godobuf-tests `Coming soon!!!` <br/>
+Godobuf test suites: https://github.com/kittenseater/godobuf-test <br/>
+https://github.com/kittenseater/godobuf-gen-v2 <br/>
+https://github.com/kittenseater/godobuf-gen-v3
