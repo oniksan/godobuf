@@ -1837,18 +1837,48 @@ class Translator:
 						text += tabulate("func add_" + f.name + "(a_key):\n", nesting)
 						nesting += 1
 						text += generate_group_clear(field_index, nesting)
+						text += tabulate("var idx = -1\n", nesting)
+						text += tabulate("for i in range(_" + f.name + ".value.size()):\n", nesting)
+						nesting += 1
+						text += tabulate("if _" + f.name + ".value[i].get_key() == a_key:\n", nesting)
+						nesting += 1
+						text += tabulate("idx = i\n", nesting)
+						text += tabulate("break\n", nesting)
+						nesting -= 2
 						text += tabulate("var element = " + class_name + ".new()\n", nesting)
 						text += tabulate("element.set_key(a_key)\n", nesting)
+						text += tabulate("if idx != -1:\n", nesting)
+						nesting += 1
+						text += tabulate("_" + f.name + ".value[idx] = element\n", nesting)
+						nesting -= 1
+						text += tabulate("else:\n", nesting)
+						nesting += 1
 						text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
+						nesting -= 1
 						text += tabulate("return element.new_value()\n", nesting)
 					else:
 						text += tabulate("func add_" + f.name + "(a_key, a_value):\n", nesting)
 						nesting += 1
 						text += generate_group_clear(field_index, nesting)
+						text += tabulate("var idx = -1\n", nesting)
+						text += tabulate("for i in range(_" + f.name + ".value.size()):\n", nesting)
+						nesting += 1
+						text += tabulate("if _" + f.name + ".value[i].get_key() == a_key:\n", nesting)
+						nesting += 1
+						text += tabulate("idx = i\n", nesting)
+						text += tabulate("break\n", nesting)
+						nesting -= 2
 						text += tabulate("var element = " + class_name + ".new()\n", nesting)
 						text += tabulate("element.set_key(a_key)\n", nesting)
 						text += tabulate("element.set_value(a_value)\n", nesting)
+						text += tabulate("if idx != -1:\n", nesting)
+						nesting += 1
+						text += tabulate("_" + f.name + ".value[idx] = element\n", nesting)
+						nesting -= 1
+						text += tabulate("else:\n", nesting)
+						nesting += 1
 						text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
+						nesting -= 1
 					break
 		else:
 			text += generate_has_oneof(field_index, nesting)
