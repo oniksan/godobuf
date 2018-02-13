@@ -3,7 +3,8 @@
 ## About
 Godobuf is a Google Protocol buffers compiler from .proto-file description to GDScript output file.
 Output file contains user protobuf messages represented by classes and protobuf core code which responsible for data serialization/deserialization.
-Godobuf used as plugin for Godot v3.x
+Godobuf used as plugin for Godot v3.x<br/>
+Godobuf is easy to use, does not require rebuilding the Godot, because it is written in GDScript. All you need is to start the plugin.
 
 ## Features
 ### Supported
