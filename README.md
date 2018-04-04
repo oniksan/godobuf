@@ -1,4 +1,4 @@
-# Godobuf v0.1.1
+# Godobuf v0.2.1
 
 ## About
 Godobuf is a Google Protocol buffers compiler from .proto-file description to GDScript output file.
@@ -16,6 +16,7 @@ Godobuf is easy to use, does not require rebuilding the Godot, because it is wri
 - Repeated fields
 - Option `packed` for fields
 - Protobuf imports (also public modificator)
+- Debug string for class (message) fields (since v0.2.1)
  
 ### Not supported
 - Packages
@@ -463,6 +464,69 @@ var state = a.from_bytes(byte_sequence)
 var my_array_b = a.get_Af2()
 for inst in my_array_b:
 	print(inst.get_Bf1())
+```
+
+### 9. Debug method to_string()
+All message classes have to_string() method.<br/>
+to_sting() generate debug string, which contains field names and their values. Default values are ignored.
+#### String output format:
+```field_<type>``` - field name
+```
+field_int: 12;
+field_float: 12.34;
+field_bool: True;
+field_string: "test";
+field_enum: ENUM::2;
+
+field_message_1: {
+  field_message_2: {
+    field_int: 12;
+    field_float: 12.34;
+  }
+  field_bool: True;
+  field_string: "test";
+};
+
+field_repeated: [
+  0: {
+    field_int: 123;
+    field_bool: True;
+  },
+  1: {
+    field_int: 454;
+    field_bool: False;
+  }
+];
+
+field_repeated: [
+  1: 2, 
+  2: 3, 
+  3: 4
+];
+
+field_map: (
+  "key1": "value1",
+  "key2": "value2"
+);
+
+field_map: (
+  "object1": {
+    field_int: 123;
+    field_bool: True;
+  },
+  "object2": {
+    field_int: 454;
+    field_bool: False;
+  }
+);
+
+field_bytes: <1, 2, 4, 5>;
+field_empty_message: {};
+```
+#### Example
+```gdscript
+# Debug print, where "message" - any Protobuf class (message)
+print(message.to_string())
 ```
 
 ## Related links
