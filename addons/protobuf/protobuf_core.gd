@@ -29,6 +29,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# DEBUG_TAB redefine this "  " if you need, example: const DEBUG_TAB = "\t"
+const DEBUG_TAB = "  "
+
 enum PB_ERR {
 	NO_ERRORS = 0,
 	VARINT_NOT_FOUND = -1,
@@ -128,12 +131,14 @@ enum PB_SERVICE_STATE {
 }
 
 class PBField:
-	func _init(a_type, a_rule, a_tag, packed, a_value = null):
+	func _init(a_name, a_type, a_rule, a_tag, packed, a_value = null):
+		name = a_name
 		type = a_type
 		rule = a_rule
 		tag = a_tag
 		option_packed = packed
 		value = a_value
+	var name
 	var type
 	var rule
 	var tag
@@ -582,4 +587,96 @@ class PBPacker:
 		var result = {}
 		for kv in key_values:
 			result[kv.get_key()] = kv.get_value()
+		return result
+	
+	static func tabulate(text, nesting):
+		var tab = ""
+		for i in range(nesting):
+			tab += DEBUG_TAB
+		return tab + text
+	
+	static func value_to_string(value, field, nesting):
+		var result = ""
+		var text
+		if field.type == PB_DATA_TYPE.MESSAGE:
+			result += "{"
+			nesting += 1
+			text = message_to_string(value.data, nesting)
+			if text != "":
+				result += "\n" + text
+				nesting -= 1
+				result += tabulate("}", nesting)
+			else:
+				nesting -= 1
+				result += "}"
+		elif field.type == PB_DATA_TYPE.BYTES:
+			result += "<"
+			for i in range(value.size()):
+				result += String(value[i])
+				if i != (value.size() - 1):
+					result += ", "
+			result += ">"
+		elif field.type == PB_DATA_TYPE.STRING:
+			result += "\"" + value + "\""
+		elif field.type == PB_DATA_TYPE.ENUM:
+			result += "ENUM::" + String(value)
+		else:
+			result += String(value)
+		return result
+	
+	static func field_to_string(field, nesting):
+		var result = tabulate(field.name + ": ", nesting)
+		if field.type == PB_DATA_TYPE.MAP:
+			if field.value.size() > 0:
+				result += "(\n"
+				nesting += 1
+				for i in range(field.value.size()):
+					var local_key_value = field.value[i].data[1].field
+					result += tabulate(value_to_string(local_key_value.value, local_key_value, nesting), nesting) + ": "
+					local_key_value = field.value[i].data[2].field
+					result += value_to_string(local_key_value.value, local_key_value, nesting)
+					if i != (field.value.size() - 1):
+						result += ","
+					result += "\n"
+				nesting -= 1
+				result += tabulate(")", nesting)
+			else:
+				result += "()"
+		elif field.rule == PB_RULE.REPEATED:
+			if field.value.size() > 0:
+				result += "[\n"
+				nesting += 1
+				for i in range(field.value.size()):
+					result += tabulate(String(i) + ": ", nesting)
+					result += value_to_string(field.value[i], field, nesting)
+					if i != (field.value.size() - 1):
+						result += ","
+					result += "\n"
+				nesting -= 1
+				result += tabulate("]", nesting)
+			else:
+				result += "[]"
+		else:
+			result += value_to_string(field.value, field, nesting)
+		result += ";\n"
+		return result
+		
+	static func message_to_string(data, nesting = 0):
+		var DEFAULT_VALUES
+		if PROTO_VERSION == 2:
+			DEFAULT_VALUES = DEFAULT_VALUES_2
+		elif PROTO_VERSION == 3:
+			DEFAULT_VALUES = DEFAULT_VALUES_3
+		var result = ""
+		var keys = data.keys()
+		keys.sort()
+		for i in keys:
+			if data[i].field.value != null:
+				if typeof(data[i].field.value) == typeof(DEFAULT_VALUES[data[i].field.type]) && data[i].field.value == DEFAULT_VALUES[data[i].field.type]:
+					continue
+				elif data[i].field.rule == PB_RULE.REPEATED && data[i].field.value.size() == 0:
+					continue
+				result += field_to_string(data[i].field, nesting)
+			elif data[i].field.rule == PB_RULE.REQUIRED:
+				result += data[i].field.name + ": " + "error"
 		return result

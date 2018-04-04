@@ -1724,6 +1724,7 @@ class Translator:
 		var f = field_table[field_index]
 		var field_name = "_" + f.name
 		var pbfield_text = field_name + " = PBField.new("
+		pbfield_text += "\"" + f.name + "\", "
 		pbfield_text += generate_field_type(f) + ", "
 		pbfield_text += generate_field_rule(f) + ", "
 		pbfield_text += String(f.tag) + ", "
@@ -1953,6 +1954,11 @@ class Translator:
 	
 	func generate_class_services(nesting):
 		var text = ""
+		text += tabulate("func to_string():\n", nesting)
+		nesting += 1
+		text += tabulate("return PBPacker.message_to_string(data)\n", nesting)
+		text += tabulate("\n", nesting)
+		nesting -= 1
 		text += tabulate("func to_bytes():\n", nesting)
 		nesting += 1
 		text += tabulate("return PBPacker.pack_message(data)\n", nesting)

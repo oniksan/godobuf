@@ -13,10 +13,6 @@ config_version=3
 config/name="Protobuf Plugin"
 config/icon="res://icon.png"
 
-[editor_plugins]
-
-enabled=PoolStringArray( "protobuf" )
-
 [rendering]
 
 environment/default_environment="res://default_env.tres"
