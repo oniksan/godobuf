@@ -176,7 +176,7 @@ class Analysis:
 	const TOKEN_CHAR_VALUE = "(" + TOKEN_HEX_ESC + "|" + TOKEN_OCT_ESC + "|" + TOKEN_CHAR_ESC + "|" + TOKEN_CHAR_EXCLUDE + ")"
 	const TOKEN_STRING_SINGLE = "('" + TOKEN_CHAR_VALUE + "*?')"
 	const TOKEN_STRING_DOUBLE = "(\"" + TOKEN_CHAR_VALUE + "*?\")"
-	const TOKEN_COMMENT_SINGLE = "(//[^\\n\\r]*)"
+	const TOKEN_COMMENT_SINGLE = "((//[^\\n\\r]*[^\\s])|//)"
 	const TOKEN_COMMENT_MULTI = "/\\*(.|[\\n\\r])*?\\*/"
 	
 	const TOKEN_SECOND_MESSAGE = "^message$"
