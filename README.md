@@ -1,4 +1,4 @@
-# Godobuf v0.2.1
+# Godobuf v0.2.2
 
 ## About
 Godobuf is a Google Protocol buffers compiler from .proto-file description to GDScript output file.
