@@ -1,5 +1,10 @@
 # Godobuf v0.2.2
 
+## Warning
+Current Godot's master branch has bug: https://github.com/godotengine/godot/issues/20354 which broke Godobuf.
+If you want use Godobuf plugin use stable Godot's versions since v.3
+
+
 ## About
 Godobuf is a Google Protocol buffers compiler from .proto-file description to GDScript output file.
 Output file contains user protobuf messages represented by classes and protobuf core code which responsible for data serialization/deserialization.
