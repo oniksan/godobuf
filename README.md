@@ -85,6 +85,11 @@ Repeated fields are setted as empty Array.
 Initially all fields setted to default values specified in Protobuf manual.<br/>
 Repeated fields are setted as empty Array.
 
+## Keywords
+Keywords cannot be used in any other constructions for which they are not intended. In particular, keywords cannot be used as field names and message names.<br/>
+### Keywords:
+`message, double, float, int32, int64, uint32, uint64, sint32, sint64, fixed32, fixed64, sfixed32, sfixed64, bool, string, bytes, enum, map, oneof, true, false, syntax, import, package, option, service, reserved, weak, public, repeated, required, optional, allow_alias, custom_option, extensions, packed`
+
 ## Using generated .gd file in Godot project 
 
 1. Open the script in which Protobuf will be used.
