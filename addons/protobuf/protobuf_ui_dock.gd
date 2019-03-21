@@ -42,11 +42,11 @@ func _ready():
 	pass
 
 func _on_InputFileButton_pressed():
-	$InputFileDialog.show_modal(true)
+	show_dialog($InputFileDialog)
 	$InputFileDialog.invalidate()
 
 func _on_OutputFileButton_pressed():
-	$OutputFileDialog.show_modal(true)
+	show_dialog($OutputFileDialog)
 	$OutputFileDialog.invalidate()
 
 func _on_InputFileDialog_file_selected(path):
@@ -63,24 +63,38 @@ func _on_OutputFileDialog_file_selected(path):
 	output_file_name = path
 	$HBoxContainer2/OutputFileEdit.text = path
 
+func show_dialog(dialog):
+	var posX
+	var posY
+	if get_viewport().size.x <= dialog.get_rect().size.x:
+		posX = 0
+	else:
+		posX = (get_viewport().size.x - dialog.get_rect().size.x) / 2
+	if get_viewport().size.y <= dialog.get_rect().size.y:
+		posY = 0
+	else:
+		posY = (get_viewport().size.y - dialog.get_rect().size.y) / 2
+	dialog.set_position(Vector2(posX, posY))
+	dialog.show_modal(true)
+
 func _on_CompileButton_pressed():
 	if input_file_name == null || output_file_name == null:
-		$FilesErrorAcceptDialog.show_modal(true)
+		show_dialog($FilesErrorAcceptDialog)
 		return
 	
 	var file = File.new()
 	if file.open(input_file_name, File.READ) < 0:
 		print("File: '", input_file_name, "' not found.")
-		$FailAcceptDialog.show_modal(true)
+		show_dialog($FailAcceptDialog)
 		return
 	
 	var parser = Parser.new()
 	
 	if parser.work(_exstract_dir(input_file_name), _extract_filename(input_file_name), \
 		output_file_name, "res://addons/protobuf/protobuf_core.gd"):
-		$SuccessAcceptDialog.show_modal(true)
+		show_dialog($SuccessAcceptDialog)
 	else:
-		$FailAcceptDialog.show_modal(true)
+		show_dialog($FailAcceptDialog)
 	
 	return
 

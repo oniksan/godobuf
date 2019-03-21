@@ -1,14 +1,14 @@
-# Godobuf v0.2.2
+# Godobuf v0.3.0
 
-## Warning
-Current Godot's master branch has bug: https://github.com/godotengine/godot/issues/20354 which broke Godobuf.
-If you want use Godobuf plugin use stable Godot's versions since v.3
+## Version
+Current Godobuf master branch used for Godot version 3.1.
+If you want use Godobuf plugin for Godot version 3.0.x use branch tagged v0.2.2 https://github.com/oniksan/godobuf/tree/v0.2.2
 
 
 ## About
 Godobuf is a Google Protocol buffers compiler from .proto-file description to GDScript output file.
 Output file contains user protobuf messages represented by classes and protobuf core code which responsible for data serialization/deserialization.
-Godobuf used as plugin for Godot v3.x<br/>
+Godobuf used as plugin for Godot v3.1<br/>
 Godobuf is easy to use, does not require rebuilding the Godot, because it is written in GDScript. All you need is to start the plugin.
 
 ## Features
@@ -40,8 +40,10 @@ Godobuf is easy to use, does not require rebuilding the Godot, because it is wri
 5. Find Godobuf plugin and set status `Active`.<br/>
 ![Plugins](/readme-images/2.png)<br/>
 6. Close `Project Settings` window.
-7. The Godobuf panel will be displayed in the Godot<br/>
+7. The Godobuf panel will be displayed in the Godot.<br/>
 ![Plugins](/readme-images/3.png)
+8. Please note that the Godobuf panel may not be visible, because located on the last tab.<br/>
+![Plugins](/readme-images/7.png)
 
 ## Usage
 
@@ -542,7 +544,7 @@ print(message.to_string())
 ## Related links
 Google Protobuf: https://developers.google.com/protocol-buffers/docs/overview <br/>
 Godot engine: http://godotengine.org <br/>
-Godot docs: http://docs.godotengine.org/en/3.0/ <br/>
+Godot docs: http://docs.godotengine.org/en/3.1/ <br/>
 Godobuf test suites: https://github.com/kittenseater/godobuf-test <br/>
 https://github.com/kittenseater/godobuf-gen-v2 <br/>
 https://github.com/kittenseater/godobuf-gen-v3

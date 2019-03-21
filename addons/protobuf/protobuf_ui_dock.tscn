@@ -2,397 +2,138 @@
 
 [ext_resource path="res://addons/protobuf/protobuf_ui_dock.gd" type="Script" id=1]
 
-[node name="Godobuf" type="VBoxContainer" index="0"]
-
-anchor_left = 0.0
-anchor_top = 0.0
+[node name="Godobuf" type="VBoxContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_right = -731.0
 margin_bottom = -374.0
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 1
-mouse_default_cursor_shape = 0
 size_flags_horizontal = 0
-size_flags_vertical = 1
-alignment = 0
 script = ExtResource( 1 )
-_sections_unfolded = [ "Anchor", "Focus", "Grow Direction", "Hint", "Margin", "Material", "Mouse", "Rect", "Size Flags", "Theme", "Visibility", "custom_constants" ]
 
-[node name="InputFileLabel" type="Label" parent="." index="0"]
-
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="InputFileLabel" type="Label" parent="."]
 margin_right = 293.0
 margin_bottom = 14.0
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 2
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 4
 text = "Input protobuf file:"
-percent_visible = 1.0
-lines_skipped = 0
-max_lines_visible = -1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="." index="1"]
-
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
 margin_top = 18.0
 margin_right = 293.0
 margin_bottom = 42.0
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 1
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
-alignment = 0
 
-[node name="InputFileEdit" type="LineEdit" parent="HBoxContainer" index="0"]
-
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="InputFileEdit" type="LineEdit" parent="HBoxContainer"]
 margin_right = 150.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 150, 0 )
-rect_pivot_offset = Vector2( 0, 0 )
-focus_mode = 2
-mouse_filter = 0
-mouse_default_cursor_shape = 1
-size_flags_horizontal = 1
-size_flags_vertical = 1
 editable = false
-focus_mode = 2
-context_menu_enabled = true
-placeholder_alpha = 0.6
-caret_blink = false
-caret_blink_speed = 0.65
-caret_position = 0
-_sections_unfolded = [ "Anchor", "Focus", "Grow Direction", "Hint", "Margin", "Placeholder", "Rect", "Size Flags" ]
 
-[node name="InputFileButton" type="Button" parent="HBoxContainer" index="1"]
-
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="InputFileButton" type="Button" parent="HBoxContainer"]
 margin_left = 154.0
 margin_right = 178.0
 margin_bottom = 24.0
-rect_pivot_offset = Vector2( 0, 0 )
-focus_mode = 2
-mouse_filter = 0
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
-toggle_mode = false
-enabled_focus_mode = 2
-shortcut = null
-group = null
 text = "..."
-flat = false
-align = 1
-_sections_unfolded = [ "Anchor", "Margin" ]
 
-[node name="OutputFileButton" type="Label" parent="." index="2"]
-
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="OutputFileButton" type="Label" parent="."]
 margin_top = 46.0
 margin_right = 293.0
 margin_bottom = 60.0
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 2
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 4
 text = "Output GDScript file:"
-percent_visible = 1.0
-lines_skipped = 0
-max_lines_visible = -1
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="." index="3"]
-
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="HBoxContainer2" type="HBoxContainer" parent="."]
 margin_top = 64.0
 margin_right = 293.0
 margin_bottom = 88.0
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 1
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
-alignment = 0
 
-[node name="OutputFileEdit" type="LineEdit" parent="HBoxContainer2" index="0"]
-
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="OutputFileEdit" type="LineEdit" parent="HBoxContainer2"]
 margin_right = 150.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 150, 0 )
-rect_pivot_offset = Vector2( 0, 0 )
-focus_mode = 2
-mouse_filter = 0
-mouse_default_cursor_shape = 1
-size_flags_horizontal = 1
-size_flags_vertical = 1
 editable = false
-focus_mode = 2
-context_menu_enabled = true
-placeholder_alpha = 0.6
-caret_blink = false
-caret_blink_speed = 0.65
-caret_position = 0
-_sections_unfolded = [ "Anchor", "Grow Direction", "Rect" ]
 
-[node name="OutputFileButton" type="Button" parent="HBoxContainer2" index="1"]
-
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="OutputFileButton" type="Button" parent="HBoxContainer2"]
 margin_left = 154.0
 margin_right = 178.0
 margin_bottom = 24.0
-rect_pivot_offset = Vector2( 0, 0 )
-focus_mode = 2
-mouse_filter = 0
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
-toggle_mode = false
-enabled_focus_mode = 2
-shortcut = null
-group = null
 text = "..."
-flat = false
-align = 1
-_sections_unfolded = [ "Anchor", "Margin" ]
 
-[node name="Control" type="Control" parent="." index="4"]
-
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="Control" type="Control" parent="."]
 margin_top = 92.0
 margin_right = 293.0
 margin_bottom = 92.0
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 0
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
 
-[node name="CompileButton" type="Button" parent="Control" index="0"]
-
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="CompileButton" type="Button" parent="Control"]
 margin_top = 15.0
 margin_right = 73.0
 margin_bottom = 35.0
-rect_pivot_offset = Vector2( 0, 0 )
-focus_mode = 2
-mouse_filter = 0
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
-toggle_mode = false
-enabled_focus_mode = 2
-shortcut = null
-group = null
 text = "Compile"
-flat = false
-align = 1
-_sections_unfolded = [ "Margin" ]
 
-[node name="InputFileDialog" type="FileDialog" parent="." index="5"]
-
-visible = false
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="InputFileDialog" type="FileDialog" parent="."]
 margin_left = 200.0
 margin_top = 200.0
 margin_right = 700.0
 margin_bottom = 500.0
-rect_min_size = Vector2( 200, 70 )
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 0
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
 popup_exclusive = true
-window_title = "Open a File"
+window_title = "Открыть файл"
 resizable = true
-dialog_hide_on_ok = false
-mode_overrides_title = true
 mode = 0
 access = 2
 filters = PoolStringArray( "*.proto; Google Protobuf File" )
-show_hidden_files = false
-current_dir = "/home/baka/projects/other/protobuf_plugin"
-current_file = ""
-current_path = "/home/baka/projects/other/protobuf_plugin/"
-_sections_unfolded = [ "Anchor", "Dialog", "Focus", "Hint", "Margin", "Popup", "Rect" ]
+current_dir = "C:/Users/robo/Documents/Новый3_1"
+current_path = "C:/Users/robo/Documents/Новый3_1/"
 
-[node name="InputFileDialog2" type="FileDialog" parent="." index="6"]
-
-visible = false
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="InputFileDialog2" type="FileDialog" parent="."]
 margin_left = 200.0
 margin_top = 200.0
 margin_right = 700.0
 margin_bottom = 500.0
-rect_min_size = Vector2( 200, 70 )
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 0
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
 popup_exclusive = true
-window_title = "Open a File"
+window_title = "Открыть файл"
 resizable = true
-dialog_hide_on_ok = false
-mode_overrides_title = true
 mode = 0
 access = 2
 filters = PoolStringArray( "*.proto; Google Protobuf File" )
-show_hidden_files = false
-current_dir = "/home/baka/projects/other/protobuf_plugin"
-current_file = ""
-current_path = "/home/baka/projects/other/protobuf_plugin/"
-_sections_unfolded = [ "Anchor", "Dialog", "Focus", "Hint", "Margin", "Popup", "Rect" ]
+current_dir = "C:/Users/robo/Documents/Новый3_1"
+current_path = "C:/Users/robo/Documents/Новый3_1/"
 
-[node name="OutputFileDialog" type="FileDialog" parent="." index="7"]
-
-visible = false
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="OutputFileDialog" type="FileDialog" parent="."]
 margin_left = 200.0
 margin_top = 200.0
 margin_right = 700.0
 margin_bottom = 500.0
-rect_min_size = Vector2( 200, 70 )
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 0
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
 popup_exclusive = true
-window_title = "Save a File"
 resizable = true
-dialog_hide_on_ok = false
-mode_overrides_title = true
-mode = 4
 access = 2
 filters = PoolStringArray( "*.gd; GDScript" )
-show_hidden_files = false
-current_dir = "/home/baka/projects/other/protobuf_plugin"
-current_file = ""
-current_path = "/home/baka/projects/other/protobuf_plugin/"
-_sections_unfolded = [ "Dialog", "Popup", "Rect" ]
+current_dir = "C:/Users/robo/Documents/Новый3_1"
+current_path = "C:/Users/robo/Documents/Новый3_1/"
 
-[node name="FilesErrorAcceptDialog" type="AcceptDialog" parent="." index="8"]
-
-visible = false
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="FilesErrorAcceptDialog" type="AcceptDialog" parent="."]
 margin_right = 83.0
 margin_bottom = 58.0
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 0
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
 popup_exclusive = true
 window_title = "Alert!"
-resizable = false
 dialog_text = "Need select both output & input files!"
-dialog_hide_on_ok = true
-_sections_unfolded = [ "Dialog", "Popup" ]
 
-[node name="SuccessAcceptDialog" type="AcceptDialog" parent="." index="9"]
-
-visible = false
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="SuccessAcceptDialog" type="AcceptDialog" parent="."]
 margin_left = 8.0
 margin_top = 22.0
 margin_right = 250.0
 margin_bottom = 80.0
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 0
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
 popup_exclusive = true
 window_title = "Alert!"
-resizable = false
 dialog_text = "Compile success done."
-dialog_hide_on_ok = true
-_sections_unfolded = [ "Anchor", "Dialog", "Margin", "Popup" ]
 
-[node name="FailAcceptDialog" type="AcceptDialog" parent="." index="10"]
-
-visible = false
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="FailAcceptDialog" type="AcceptDialog" parent="."]
 margin_left = 8.0
 margin_top = 22.0
 margin_right = 250.0
 margin_bottom = 80.0
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 0
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
 popup_exclusive = true
 window_title = "Alert!"
-resizable = false
 dialog_text = "Compile fail. See details in console output."
-dialog_hide_on_ok = true
-_sections_unfolded = [ "Dialog", "Popup", "Visibility" ]
 
 [connection signal="pressed" from="HBoxContainer/InputFileButton" to="." method="_on_InputFileButton_pressed"]
-
 [connection signal="pressed" from="HBoxContainer2/OutputFileButton" to="." method="_on_OutputFileButton_pressed"]
-
 [connection signal="pressed" from="Control/CompileButton" to="." method="_on_CompileButton_pressed"]
-
 [connection signal="file_selected" from="InputFileDialog" to="." method="_on_InputFileDialog_file_selected"]
-
 [connection signal="file_selected" from="InputFileDialog2" to="." method="_on_InputFileDialog_file_selected"]
-
 [connection signal="file_selected" from="OutputFileDialog" to="." method="_on_OutputFileDialog_file_selected"]
-
-

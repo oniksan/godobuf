@@ -89,10 +89,6 @@ class Helper:
 		return file_name + ":" + String(col) + ":" + String(row) + ": error: " + error_text
 
 class AnalyzeResult:
-	func _init():
-		pass
-
-class AnalyzeResult:
 	var classes = []
 	var fields = []
 	var groups = []
@@ -476,19 +472,19 @@ class Analysis:
 					else:
 						cur_token = TOKEN[k].get_entrances()[0]
 						check = check_range(main_token, cur_token)
-						if check.state == INCLUDE:
+						if check.state == RANGE_STATE.INCLUDE:
 							TOKEN[k].remove_entrance(0)
 							end = true
-						elif check.state == EXCLUDE_LEFT:
+						elif check.state == RANGE_STATE.EXCLUDE_LEFT:
 							main_token = cur_token
 							main_index = k
 							end = false
 							repeat = true
 							break
-						elif check.state == EXCLUDE_RIGHT:
+						elif check.state == RANGE_STATE.EXCLUDE_RIGHT:
 							end = true
 							break
-						elif check.state == OVERLAY || check.state == EQUAL:
+						elif check.state == RANGE_STATE.OVERLAY || check.state == RANGE_STATE.EQUAL:
 							result.errors.append(check)
 							TOKEN[main_index].remove_entrance(0)
 							TOKEN[k].remove_entrance(0)
@@ -496,7 +492,7 @@ class Analysis:
 							end = false
 							repeat = true
 							break
-						elif check.state == ENTERS:
+						elif check.state == RANGE_STATE.ENTERS:
 							TOKEN[main_index].remove_entrance(0)
 							main_token = cur_token
 							main_index = k
@@ -1046,10 +1042,6 @@ class Analysis:
 	}
 	
 	class ASTClass:
-		func copy():
-			pass
-	
-	class ASTClass:
 		func _init(n, t, p, pn, o, ci):
 			name = n
 			type = t
@@ -1074,10 +1066,6 @@ class Analysis:
 			return res
 	
 	class ASTEnumValue:
-		func copy():
-			pass
-	
-	class ASTEnumValue:
 		func _init(n, v):
 			name = n
 			value = v
@@ -1087,10 +1075,6 @@ class Analysis:
 		
 		func copy():
 			return ASTEnumValue.new(name, value)
-	
-	class ASTField:
-		func copy():
-			pass
 	
 	class ASTField:
 		func _init(t, n, tn, p, q, o, ci):
@@ -1122,10 +1106,6 @@ class Analysis:
 		ONEOF = 0,
 		ALL = 1
 	}
-	
-	class ASTFieldGroup:
-		func copy():
-			pass
 	
 	class ASTFieldGroup:
 		func _init(n, pi, r):
@@ -1503,10 +1483,10 @@ class Semantic:
 	func check_class_names():
 		var result = []
 		for i in range(class_table.size()):
-			var class_name = class_table[i].parent_name + "." + class_table[i].name
+			var the_class_name = class_table[i].parent_name + "." + class_table[i].name
 			for j in range(i + 1, class_table.size(), 1):
 				var inner_name = class_table[j].parent_name + "." + class_table[j].name
-				if inner_name == class_name:
+				if inner_name == the_class_name:
 					var check = CheckResult.new(class_table[j].construction_index, class_table[i].construction_index, j, CHECK_SUBJECT.CLASS_NAME)
 					result.append(check)
 					break
@@ -1515,10 +1495,10 @@ class Semantic:
 	func check_field_names():
 		var result = []
 		for i in range(field_table.size()):
-			var class_name = class_table[field_table[i].parent_class_id].parent_name + "." + class_table[field_table[i].parent_class_id].name
+			var the_class_name = class_table[field_table[i].parent_class_id].parent_name + "." + class_table[field_table[i].parent_class_id].name
 			for j in range(i + 1, field_table.size(), 1):
 				var inner_name = class_table[field_table[j].parent_class_id].parent_name + "." + class_table[field_table[j].parent_class_id].name
-				if inner_name == class_name:
+				if inner_name == the_class_name:
 					if field_table[i].name == field_table[j].name:
 						var check = CheckResult.new(field_table[j].construction_index, field_table[i].construction_index, j, CHECK_SUBJECT.FIELD_NAME)
 						result.append(check)
@@ -1529,15 +1509,15 @@ class Semantic:
 						break
 		return result
 	
-	func find_full_class_name(class_name):
+	func find_full_class_name(the_class_name):
 		for i in range(class_table.size()):
-			if class_name == class_table[i].parent_name + "." + class_table[i].name:
+			if the_class_name == class_table[i].parent_name + "." + class_table[i].name:
 				return i
 		return -1
 	
-	func find_class_name(class_name):
+	func find_class_name(the_class_name):
 		for i in range(class_table.size()):
-			if class_name == class_table[i].name:
+			if the_class_name == class_table[i].name:
 				return i
 		return -1
 	
@@ -1548,9 +1528,9 @@ class Semantic:
 				result.append(i)
 		return result
 	
-	func find_in_childs(class_name, child_indexes):
+	func find_in_childs(the_class_name, child_indexes):
 		for c in child_indexes:
-			if class_name == class_table[c].name:
+			if the_class_name == class_table[c].name:
 				return c
 		return -1
 	
@@ -1786,8 +1766,8 @@ class Translator:
 		var f = field_table[field_index]
 		text += tabulate("var _" + f.name + "\n", nesting)
 		if f.field_type == Analysis.FIELD_TYPE.MESSAGE:
-			var class_name = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
-			class_name = class_name.substr(1, class_name.length() - 1)
+			var the_class_name = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
+			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
 			text += generate_has_oneof(field_index, nesting)
 			text += tabulate("func get_" + f.name + "():\n", nesting)
 			nesting += 1
@@ -1800,18 +1780,18 @@ class Translator:
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
 				text += tabulate("func add_" + f.name + "():\n", nesting)
 				nesting += 1
-				text += tabulate("var element = " + class_name + ".new()\n", nesting)
+				text += tabulate("var element = " + the_class_name + ".new()\n", nesting)
 				text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
 				text += tabulate("return element\n", nesting)
 			else:
 				text += tabulate("func new_" + f.name + "():\n", nesting)
 				nesting += 1
 				text += generate_group_clear(field_index, nesting)
-				text += tabulate("_" + f.name + ".value = " + class_name + ".new()\n", nesting)
+				text += tabulate("_" + f.name + ".value = " + the_class_name + ".new()\n", nesting)
 				text += tabulate("return _" + f.name + ".value\n", nesting)
 		elif f.field_type == Analysis.FIELD_TYPE.MAP:
-			var class_name = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
-			class_name = class_name.substr(1, class_name.length() - 1)
+			var the_class_name = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
+			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
 			text += generate_has_oneof(field_index, nesting)
 			text += tabulate("func get_raw_" + f.name + "():\n", nesting)
 			nesting += 1
@@ -1830,7 +1810,7 @@ class Translator:
 					text += tabulate("func add_empty_" + f.name + "():\n", nesting)
 					nesting += 1
 					text += generate_group_clear(field_index, nesting)
-					text += tabulate("var element = " + class_name + ".new()\n", nesting)
+					text += tabulate("var element = " + the_class_name + ".new()\n", nesting)
 					text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
 					text += tabulate("return element\n", nesting)
 					nesting -= 1
@@ -1846,7 +1826,7 @@ class Translator:
 						text += tabulate("idx = i\n", nesting)
 						text += tabulate("break\n", nesting)
 						nesting -= 2
-						text += tabulate("var element = " + class_name + ".new()\n", nesting)
+						text += tabulate("var element = " + the_class_name + ".new()\n", nesting)
 						text += tabulate("element.set_key(a_key)\n", nesting)
 						text += tabulate("if idx != -1:\n", nesting)
 						nesting += 1
@@ -1869,7 +1849,7 @@ class Translator:
 						text += tabulate("idx = i\n", nesting)
 						text += tabulate("break\n", nesting)
 						nesting -= 2
-						text += tabulate("var element = " + class_name + ".new()\n", nesting)
+						text += tabulate("var element = " + the_class_name + ".new()\n", nesting)
 						text += tabulate("element.set_key(a_key)\n", nesting)
 						text += tabulate("element.set_value(a_value)\n", nesting)
 						text += tabulate("if idx != -1:\n", nesting)
@@ -1903,52 +1883,46 @@ class Translator:
 		return text
 	
 	func generate_class(class_index, nesting):
-		var text = []
-		text.append("")
-		text.append("")
+		var text = ""
 		if class_table[class_index].type == Analysis.CLASS_TYPE.MESSAGE || class_table[class_index].type == Analysis.CLASS_TYPE.MAP:
 			var cls_pref = ""
 			cls_pref += tabulate("class " + class_table[class_index].name + ":\n", nesting)
 			nesting += 1
 			cls_pref += tabulate("func _init():\n", nesting)
-			text[0] += cls_pref
-			text[1] += cls_pref
+			text += cls_pref
 			nesting += 1
-			text[1] += tabulate("pass\n", nesting)
-			text[1] += tabulate("\n", nesting)
-			text[0] += tabulate("var service\n", nesting)
-			text[0] += tabulate("\n", nesting)
+			text += tabulate("var service\n", nesting)
+			text += tabulate("\n", nesting)
 			var field_text = ""
 			for i in range(field_table.size()):
 				if field_table[i].parent_class_id == class_index:
-					text[0] += generate_field_constructor(i, nesting)
-					text[0] += tabulate("\n", nesting)
+					text += generate_field_constructor(i, nesting)
+					text += tabulate("\n", nesting)
 					field_text += generate_field(i, nesting - 1)
 					field_text += tabulate("\n", nesting - 1)
 			nesting -= 1
-			text[0] += tabulate("var data = {}\n", nesting)
-			text[0] += tabulate("\n", nesting)
-			text[0] += field_text
+			text += tabulate("var data = {}\n", nesting)
+			text += tabulate("\n", nesting)
+			text += field_text
 			for j in range(class_table.size()):
 				if class_table[j].parent_index == class_index:
 					var cl_text = generate_class(j, nesting)
-					text[0] += cl_text[0]
-					text[1] += cl_text[1]
+					text += cl_text
 					if class_table[j].type == Analysis.CLASS_TYPE.MESSAGE || class_table[j].type == Analysis.CLASS_TYPE.MAP:
-						text[0] += generate_class_services(nesting + 1)
-						text[0] += tabulate("\n", nesting + 1)
+						text += generate_class_services(nesting + 1)
+						text += tabulate("\n", nesting + 1)
 		elif class_table[class_index].type == Analysis.CLASS_TYPE.ENUM:
-			text[0] += tabulate("enum " + class_table[class_index].name + " {\n", nesting)
+			text += tabulate("enum " + class_table[class_index].name + " {\n", nesting)
 			nesting += 1
 			for en in range(class_table[class_index].values.size()):
 				var enum_val = class_table[class_index].values[en].name + " = " + class_table[class_index].values[en].value
 				if en == class_table[class_index].values.size() - 1:
-					text[0] += tabulate(enum_val + "\n", nesting)
+					text += tabulate(enum_val + "\n", nesting)
 				else:
-					text[0] += tabulate(enum_val + ",\n", nesting)
+					text += tabulate(enum_val + ",\n", nesting)
 			nesting -= 1
-			text[0] += tabulate("}\n", nesting)
-			text[0] += tabulate("\n", nesting)
+			text += tabulate("}\n", nesting)
+			text += tabulate("\n", nesting)
 			
 		return text
 	
@@ -2010,19 +1984,16 @@ class Translator:
 		text += "const PROTO_VERSION = " + String(proto_version) + "\n\n"
 		text += core_text + "\n\n\n"
 		text += "############### USER DATA BEGIN ################\n"
-		var cls_service = ""
 		var cls_user = ""
 		for i in range(class_table.size()):
 			if class_table[i].parent_index == -1:
 				var cls_text = generate_class(i, nesting)
-				cls_user += cls_text[0]
-				cls_service += cls_text[1]
+				cls_user += cls_text
 				if class_table[i].type == Analysis.CLASS_TYPE.MESSAGE:
 					nesting += 1
 					cls_user += generate_class_services(nesting)
 					cls_user += tabulate("\n", nesting)
 					nesting -= 1
-		text += cls_service
 		text += "\n\n"
 		text += cls_user
 		text += "################ USER DATA END #################\n"
