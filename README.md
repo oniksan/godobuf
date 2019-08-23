@@ -1,5 +1,31 @@
 # Godobuf v0.3.0
 
+## Warning
+If you create a proto file with nested classes that have the same name, Godobuf will deploy a script with similar nested classes.
+### For example:
+```protobuf
+message M1 {
+	message Inner {
+		...
+	}
+	...
+}
+
+message M2 {
+	message Inner {
+		...
+	}
+	...
+}
+```
+Currently in Godot versions 3.1 and 3.1.1 there is a bug in using nested classes with the same name:
+https://github.com/godotengine/godot/issues/27111
+
+### Solutions:
+1. Wait for stable version 3.2.
+2. Compile the current master branch of Godot (there the bug is fixed).
+3. Do not use the same name in nested classes.
+
 ## Version
 Current Godobuf master branch used for Godot version 3.1.
 If you want use Godobuf plugin for Godot version 3.0.x use branch tagged v0.2.2 https://github.com/oniksan/godobuf/tree/v0.2.2
