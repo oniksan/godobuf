@@ -1,40 +1,22 @@
-# Godobuf v0.3.0
+# Godobuf v0.4.0
 
-## Warning
-If you create a proto file with nested classes that have the same name, Godobuf will deploy a script with similar nested classes.
-### For example:
-```protobuf
-message M1 {
-	message Inner {
-		...
-	}
-	...
-}
+## What's new in v0.4.0
+Added support for static typing for the GDScript https://docs.godotengine.org/en/latest/getting_started/scripting/gdscript/static_typing.html in generated code and entire service code.<br/>
+API compatibility with previous versions saved.<br/>
+If anyone has problems using, create issue.
 
-message M2 {
-	message Inner {
-		...
-	}
-	...
-}
-```
-Currently in Godot versions 3.1 and 3.1.1 there is a bug in using nested classes with the same name:
-https://github.com/godotengine/godot/issues/27111
-
-### Solutions:
-1. Wait for stable version 3.2.
-2. Compile the current master branch of Godot (there the bug is fixed).
-3. Do not use the same name in nested classes.
 
 ## Version
-Current Godobuf master branch used for Godot version 3.1.
-If you want use Godobuf plugin for Godot version 3.0.x use branch tagged v0.2.2 https://github.com/oniksan/godobuf/tree/v0.2.2
+Current Godobuf master branch used for Godot version 3.2.<br/>
+If you want use Godobuf plugin for other Godot versions see:
+- 3.0.x use branch tagged v0.2.2 https://github.com/oniksan/godobuf/tree/v0.2.2
+- 3.1.x use branch tagged v0.3.0 https://github.com/oniksan/godobuf/tree/v0.3.0
 
 
 ## About
 Godobuf is a Google Protocol buffers compiler from .proto-file description to GDScript output file.
 Output file contains user protobuf messages represented by classes and protobuf core code which responsible for data serialization/deserialization.
-Godobuf used as plugin for Godot v3.1<br/>
+Godobuf used as plugin for Godot v3.2<br/>
 Godobuf is easy to use, does not require rebuilding the Godot, because it is written in GDScript. All you need is to start the plugin.
 
 ## Features
@@ -570,7 +552,7 @@ print(message.to_string())
 ## Related links
 Google Protobuf: https://developers.google.com/protocol-buffers/docs/overview <br/>
 Godot engine: http://godotengine.org <br/>
-Godot docs: http://docs.godotengine.org/en/3.1/ <br/>
+Godot docs: https://docs.godotengine.org/en/stable/ <br/>
 Godobuf test suites: https://github.com/kittenseater/godobuf-test <br/>
 https://github.com/kittenseater/godobuf-gen-v2 <br/>
 https://github.com/kittenseater/godobuf-gen-v3
