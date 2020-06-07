@@ -2089,6 +2089,7 @@ func parse_all(analyzes : Dictionary, imports : Array, path : String, full_name 
 
 func union_analyses(a1 : AnalyzeResult, a2 : AnalyzeResult, only_classes : bool = true) -> void:
 	var class_offset : int = a1.classes.size()
+	var field_offset = a1.fields.size()
 	for cl in a2.classes:
 		var cur_class : Analysis.ASTClass = cl.copy()
 		if cur_class.parent_index != -1:
@@ -2101,7 +2102,6 @@ func union_analyses(a1 : AnalyzeResult, a2 : AnalyzeResult, only_classes : bool 
 		cur_field.parent_class_id += class_offset
 		cur_field.type_class_id = -1
 		a1.fields.append(cur_field)
-	var field_offset = a1.fields.size()
 	for gr in a2.groups:
 		var cur_group : Analysis.ASTFieldGroup = gr.copy()
 		cur_group.parent_class_id += class_offset
