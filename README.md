@@ -1,4 +1,7 @@
-# Godobuf v0.4.0
+# Godobuf v0.4.1
+
+## Changelog in v0.4.1
+Bug fix: oneof type of messages defined in imported file.
 
 ## What's new in v0.4.0
 Added support for static typing for the GDScript https://docs.godotengine.org/en/latest/getting_started/scripting/gdscript/static_typing.html in generated code and entire service code.<br/>
