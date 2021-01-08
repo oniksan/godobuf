@@ -177,7 +177,7 @@ class PBPacker:
 				value = 1
 			else:
 				value = 0
-		for i in range(9):
+		for _i in range(9):
 			var b = value & 0x7F
 			value >>= 7
 			if value:
@@ -200,7 +200,7 @@ class PBPacker:
 			spb.put_double(value)
 			bytes = spb.get_data_array()
 		else:
-			for i in range(count):
+			for _i in range(count):
 				bytes.append(value & 0xFF)
 				value >>= 8
 		return bytes
@@ -563,7 +563,7 @@ class PBPacker:
 	
 	static func tabulate(text : String, nesting : int) -> String:
 		var tab : String = ""
-		for i in range(nesting):
+		for _i in range(nesting):
 			tab += DEBUG_TAB
 		return tab + text
 	
