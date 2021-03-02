@@ -1,5 +1,5 @@
 # Godobuf v0.4.2
-
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/oniksan)
 ## Changelog in v0.4.2
 Aesthetic changes in the core: Suppressing unused variable warnings in "for" constructions.
 
