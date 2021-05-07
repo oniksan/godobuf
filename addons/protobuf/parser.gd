@@ -1815,6 +1815,7 @@ class Translator:
 				nesting += 1
 				text += generate_group_clear(field_index, nesting)
 				text += tabulate("_" + f.name + ".value = " + the_class_name + ".new()\n", nesting)
+				text += tabulate("data[" + f.tag + "].state = PB_SERVICE_STATE.FILLED\n", nesting)
 				text += tabulate("return _" + f.name + ".value\n", nesting)
 		elif f.field_type == Analysis.FIELD_TYPE.MAP:
 			var the_class_name : String = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
