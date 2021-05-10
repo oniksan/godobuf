@@ -1763,8 +1763,10 @@ class Translator:
 				for i in g.field_indexes:
 					if field_index == i:
 						find = true
+						text += tabulate("data[" + field_table[i].tag + "].state = PB_SERVICE_STATE.FILLED\n", nesting)
 					else:
 						text += tabulate("_" + field_table[i].name + ".value = " + default_dict_text() + "[" + generate_field_type(field_table[i]) + "]\n", nesting)
+						text += tabulate("data[" + field_table[i].tag + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			if find:
 				return text
 		return ""
@@ -1802,6 +1804,7 @@ class Translator:
 			nesting -= 1
 			text += tabulate("func clear_" + f.name + "() -> void:\n", nesting)
 			nesting += 1
+			text += tabulate("data[" + f.tag + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
 			nesting -= 1
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
@@ -1830,6 +1833,7 @@ class Translator:
 			nesting -= 1
 			text += tabulate("func clear_" + f.name + "():\n", nesting)
 			nesting += 1
+			text += tabulate("data[" + f.tag + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
 			nesting -= 1
 			for i in range(field_table.size()):
@@ -1911,6 +1915,7 @@ class Translator:
 			nesting -= 1
 			text += tabulate("func clear_" + f.name + "() -> void:\n", nesting)
 			nesting += 1
+			text += tabulate("data[" + f.tag + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
 			nesting -= 1
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
