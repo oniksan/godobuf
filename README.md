@@ -1,7 +1,7 @@
-# Godobuf v0.4.2
+# Godobuf v0.4.3
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/oniksan)
-## Changelog in v0.4.2
-Aesthetic changes in the core: Suppressing unused variable warnings in "for" constructions.
+## Changelog in v0.4.3
+Bug fixed: Oneof fields with default values https://github.com/oniksan/godobuf/issues/14.
 
 ## What's new in v0.4.0
 Added support for static typing for the GDScript https://docs.godotengine.org/en/latest/getting_started/scripting/gdscript/static_typing.html in generated code and entire service code.<br/>
