@@ -1779,11 +1779,7 @@ class Translator:
 					if field_index == i:
 						text += tabulate("func has_" + field_table[i].name + "() -> bool:\n", nesting)
 						nesting += 1
-						text += tabulate("if data[" + field_table[i].tag + "].state == PB_SERVICE_STATE.FILLED:\n", nesting)
-						nesting += 1
-						text += tabulate("return true\n", nesting)
-						nesting -= 1
-						text += tabulate("return false\n", nesting)
+						text += tabulate("return data[" + field_table[i].tag + "].state == PB_SERVICE_STATE.FILLED\n", nesting)
 						return text
 		return ""
 	
