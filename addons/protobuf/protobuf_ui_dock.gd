@@ -33,6 +33,7 @@ tool
 extends VBoxContainer
 
 var Parser = preload("res://addons/protobuf/parser.gd")
+var Util = preload("res://addons/protobuf/protobuf_util.gd")
 
 var input_file_name = null
 var output_file_name = null
@@ -90,26 +91,10 @@ func _on_CompileButton_pressed():
 	
 	var parser = Parser.new()
 	
-	if parser.work(_exstract_dir(input_file_name), _extract_filename(input_file_name), \
+	if parser.work(Util.extract_dir(input_file_name), Util.extract_filename(input_file_name), \
 		output_file_name, "res://addons/protobuf/protobuf_core.gd"):
 		show_dialog($SuccessAcceptDialog)
 	else:
 		show_dialog($FailAcceptDialog)
 	
 	return
-
-func _exstract_dir(file_path):
-	var parts = file_path.split("/", false)
-	parts.remove(parts.size() - 1)
-	var path
-	if file_path.begins_with("/"):
-		path = "/"
-	else:
-		path = ""
-	for part in parts:
-		path += part + "/"
-	return path
-
-func _extract_filename(file_path):
-	var parts = file_path.split("/", false)
-	return parts[parts.size() - 1]
