@@ -58,6 +58,7 @@ Godobuf is easy to use, does not require rebuilding the Godot, because it is wri
 
 ## Usage
 
+### From the User Interface
 1. Open file dialog window `Input protobuf file`.
 2. Choose *.proto file in a dialog window.<br/>
 ![Input protobuf file](/readme-images/4.png)<br/>
@@ -71,6 +72,10 @@ Godobuf is easy to use, does not require rebuilding the Godot, because it is wri
 ![Alert](/readme-images/6.png)<br/>
 9. If compilation was successful a new GDScript will be created in a specified directory.
 10. Use script in you project.
+
+### From the Command Line
+1. From the root folder of your project, run `godot -s addons/protobuf/protobuf_cmdln.gd --input=A.proto --output=my_proto.gd`
+2. Optionally, define an alias: `alias godobuf='godot -s addons/protobuf/protobuf_cmdln.gd'`
 
 ## Mapping of protocol buffers datatypes to GDScript
 

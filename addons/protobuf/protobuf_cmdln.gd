@@ -29,72 +29,39 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-tool
-extends VBoxContainer
+extends SceneTree
 
 var Parser = preload("res://addons/protobuf/parser.gd")
 var Util = preload("res://addons/protobuf/protobuf_util.gd")
 
-var input_file_name = null
-var output_file_name = null
+func error(msg : String):
+	push_error(msg)
+	OS.exit_code = 1
+	quit()
 
-func _ready():
-	var screen_size = OS.get_screen_size()
-	pass
+func _init():
+	var arguments = {}
+	for argument in OS.get_cmdline_args():
+		if argument.find("=") > -1:
+			var key_value = argument.split("=")
+			arguments[key_value[0].lstrip("--")] = key_value[1]
 
-func _on_InputFileButton_pressed():
-	show_dialog($InputFileDialog)
-	$InputFileDialog.invalidate()
+	if !arguments.has("input") || !arguments.has("output"):
+		error("Expected 2 Parameters: input and output")
 
-func _on_OutputFileButton_pressed():
-	show_dialog($OutputFileDialog)
-	$OutputFileDialog.invalidate()
+	var input_file_name = arguments["input"]
+	var output_file_name = arguments["output"]
 
-func _on_InputFileDialog_file_selected(path):
-	input_file_name = path
-	$HBoxContainer/InputFileEdit.text = path
-#	
-#	var ext = input_file_name.get_extension()
-#	output_file_name = input_file_name.left(input_file_name.length() - ext.length()) + "gd"
-##
-#	$HBoxContainer2/OutputFileEdit.text = output_file_name
-#	$HBoxContainer2/OutputFileDialog.set_current_dir(_exstract_dir(output_file_name))
-
-func _on_OutputFileDialog_file_selected(path):
-	output_file_name = path
-	$HBoxContainer2/OutputFileEdit.text = path
-
-func show_dialog(dialog):
-	var posX
-	var posY
-	if get_viewport().size.x <= dialog.get_rect().size.x:
-		posX = 0
-	else:
-		posX = (get_viewport().size.x - dialog.get_rect().size.x) / 2
-	if get_viewport().size.y <= dialog.get_rect().size.y:
-		posY = 0
-	else:
-		posY = (get_viewport().size.y - dialog.get_rect().size.y) / 2
-	dialog.set_position(Vector2(posX, posY))
-	dialog.show_modal(true)
-
-func _on_CompileButton_pressed():
-	if input_file_name == null || output_file_name == null:
-		show_dialog($FilesErrorAcceptDialog)
-		return
-	
 	var file = File.new()
 	if file.open(input_file_name, File.READ) < 0:
-		print("File: '", input_file_name, "' not found.")
-		show_dialog($FailAcceptDialog)
-		return
-	
+		error("File: '" + input_file_name + "' not found.")
+
 	var parser = Parser.new()
-	
+
 	if parser.work(Util.extract_dir(input_file_name), Util.extract_filename(input_file_name), \
 		output_file_name, "res://addons/protobuf/protobuf_core.gd"):
-		show_dialog($SuccessAcceptDialog)
+		print("Compiled '", input_file_name, "' to '", output_file_name, "'.")
 	else:
-		show_dialog($FailAcceptDialog)
-	
-	return
+		error("Compilation failed.")
+
+	quit()
