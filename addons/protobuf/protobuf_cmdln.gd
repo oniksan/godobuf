@@ -63,3 +63,5 @@ func _init():
 		print("Compiled '", input_file_name, "' to '", output_file_name, "'.")
 	else:
 		error("Compilation failed.")
+
+	quit()
