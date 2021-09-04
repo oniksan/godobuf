@@ -1800,7 +1800,7 @@ class Translator:
 			nesting -= 1
 			text += tabulate("func clear_" + f.name + "() -> void:\n", nesting)
 			nesting += 1
-			text += tabulate("data[" + f.tag + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
+			text += tabulate("data[" + String(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
 			nesting -= 1
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
@@ -1829,7 +1829,7 @@ class Translator:
 			nesting -= 1
 			text += tabulate("func clear_" + f.name + "():\n", nesting)
 			nesting += 1
-			text += tabulate("data[" + f.tag + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
+			text += tabulate("data[" + String(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
 			nesting -= 1
 			for i in range(field_table.size()):
@@ -1911,7 +1911,7 @@ class Translator:
 			nesting -= 1
 			text += tabulate("func clear_" + f.name + "() -> void:\n", nesting)
 			nesting += 1
-			text += tabulate("data[" + f.tag + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
+			text += tabulate("data[" + String(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
 			nesting -= 1
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
