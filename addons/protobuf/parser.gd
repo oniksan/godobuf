@@ -1787,7 +1787,7 @@ class Translator:
 		var text : String = ""
 		var f : Analysis.ASTField = field_table[field_index]
 		text += tabulate("var _" + f.name + ": PBField\n", nesting)
-		if f.field_type == Analysis.FIELD_TYPE.MESSAGE:
+		if f.field_type == Analysis.FIELD_TYPE.MESSAGE and f.qualificator != Analysis.FIELD_QUALIFICATOR.REPEATED:
 			var the_class_name : String = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
 			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
 			text += generate_has_oneof(field_index, nesting)
