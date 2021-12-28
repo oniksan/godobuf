@@ -1791,10 +1791,7 @@ class Translator:
 			var the_class_name : String = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
 			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
 			text += generate_has_oneof(field_index, nesting)
-			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-				text += tabulate("func get_" + f.name + "() -> Array:\n", nesting)
-			else:
-				text += tabulate("func get_" + f.name + "() -> " + the_class_name + ":\n", nesting)
+			text += tabulate("func get_" + f.name + "() -> " + the_class_name + ":\n", nesting)
 			nesting += 1
 			text += tabulate("return _" + f.name + ".value\n", nesting)
 			nesting -= 1
@@ -1803,18 +1800,16 @@ class Translator:
 			text += tabulate("data[" + String(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
 			nesting -= 1
-			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-				text += tabulate("func add_" + f.name + "() -> " + the_class_name + ":\n", nesting)
-				nesting += 1
-				text += tabulate("var element = " + the_class_name + ".new()\n", nesting)
-				text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
-				text += tabulate("return element\n", nesting)
-			else:
-				text += tabulate("func new_" + f.name + "() -> " + the_class_name + ":\n", nesting)
-				nesting += 1
-				text += generate_group_clear(field_index, nesting)
-				text += tabulate("_" + f.name + ".value = " + the_class_name + ".new()\n", nesting)
-				text += tabulate("return _" + f.name + ".value\n", nesting)
+			text += tabulate("func set_" + f.name + "(value: " + the_class_name + "):\n", nesting)
+			nesting += 1
+			text += generate_group_clear(field_index, nesting)
+			text += tabulate("_" + f.name + ".value = value\n", nesting)
+			nesting -= 1
+			text += tabulate("func new_" + f.name + "() -> " + the_class_name + ":\n", nesting)
+			nesting += 1
+			text += generate_group_clear(field_index, nesting)
+			text += tabulate("_" + f.name + ".value = " + the_class_name + ".new()\n", nesting)
+			text += tabulate("return _" + f.name + ".value\n", nesting)
 		elif f.field_type == Analysis.FIELD_TYPE.MAP:
 			var the_class_name : String = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
 			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
@@ -1894,6 +1889,45 @@ class Translator:
 						text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
 						nesting -= 1
 					break
+		elif f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
+			var the_class_name : String = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
+			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
+
+			# Getter.
+			text += tabulate("func get_" + f.name + "() -> Array:\n", nesting)
+			nesting += 1
+			text += tabulate("return _" + f.name + ".value\n", nesting)
+			nesting -= 1
+
+			# Clearer.
+			text += tabulate("func clear_" + f.name + "() -> void:\n", nesting)
+			nesting += 1
+			text += tabulate("data[" + String(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
+			text += tabulate("_" + f.name + ".value = []\n", nesting)
+			nesting -= 1
+
+			if f.field_type == Analysis.FIELD_TYPE.MESSAGE:
+				# For message types, the add method constructs a new message and appends it to the repeated field.
+				text += tabulate("func add_" + f.name + "() -> " + the_class_name + ":\n", nesting)
+				nesting += 1
+				text += tabulate("var element = " + the_class_name + ".new()\n", nesting)
+				text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
+				text += tabulate("return element\n", nesting)
+				nesting -= 1
+			else:
+				# For scalars, add an append method and a setter.
+				var gd_type : String = generate_gdscript_simple_type(f)
+				var argument_type : String = ""
+				if gd_type != "":
+					argument_type = " : " + gd_type
+				text += tabulate("func add_" + f.name + "(value" + argument_type + ") -> void:\n", nesting)
+				nesting += 1
+				text += tabulate("_" + f.name + ".value.append(value)\n", nesting)
+				nesting -= 1
+				text += tabulate("func set_" + f.name + "(value: Array) -> void:\n", nesting)
+				nesting += 1
+				text += tabulate("_" + f.name + ".value = value.duplicate()\n", nesting)
+				nesting -= 1
 		else:
 			var gd_type : String = generate_gdscript_simple_type(f)
 			var return_type : String = ""
@@ -1902,10 +1936,7 @@ class Translator:
 				return_type = " -> " + gd_type
 				argument_type = " : " + gd_type
 			text += generate_has_oneof(field_index, nesting)
-			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-				text += tabulate("func get_" + f.name + "() -> Array:\n", nesting)
-			else:
-				text += tabulate("func get_" + f.name + "()" + return_type + ":\n", nesting)
+			text += tabulate("func get_" + f.name + "()" + return_type + ":\n", nesting)
 			nesting += 1
 			text += tabulate("return _" + f.name + ".value\n", nesting)
 			nesting -= 1
@@ -1914,15 +1945,10 @@ class Translator:
 			text += tabulate("data[" + String(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
 			nesting -= 1
-			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-				text += tabulate("func add_" + f.name + "(value" + argument_type + ") -> void:\n", nesting)
-				nesting += 1
-				text += tabulate("_" + f.name + ".value.append(value)\n", nesting)
-			else:
-				text += tabulate("func set_" + f.name + "(value" + argument_type + ") -> void:\n", nesting)
-				nesting += 1
-				text += generate_group_clear(field_index, nesting)
-				text += tabulate("_" + f.name + ".value = value\n", nesting)
+			text += tabulate("func set_" + f.name + "(value" + argument_type + ") -> void:\n", nesting)
+			nesting += 1
+			text += generate_group_clear(field_index, nesting)
+			text += tabulate("_" + f.name + ".value = value\n", nesting)
 		return text
 	
 	func generate_class(class_index : int, nesting : int) -> String:
