@@ -1,14 +1,13 @@
-# Godobuf v0.4.4
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/oniksan)
-## Changelog in v0.4.4
+# Godobuf v0.5.0
+
+## Changelog in v0.5.0
+- Implemented unit tests
+- Fixed repeat field clearing bug
+- Fixed map bug with default values
+
+## What's new in v0.4.4
 - Added support Command Line interface
 - Code generator bug fixed
-
-
-## What's new in v0.4.0
-Added support for static typing for the GDScript https://docs.godotengine.org/en/latest/getting_started/scripting/gdscript/static_typing.html in generated code and entire service code.<br/>
-API compatibility with previous versions saved.<br/>
-If anyone has problems using, create issue.
 
 
 ## Version
@@ -78,6 +77,13 @@ Godobuf is easy to use, does not require rebuilding the Godot, because it is wri
 ### From the Command Line
 1. From the root folder of your project, run `godot -s addons/protobuf/protobuf_cmdln.gd --input=A.proto --output=my_proto.gd`
 2. Optionally, define an alias: `alias godobuf='godot -s addons/protobuf/protobuf_cmdln.gd'`
+
+### Unit tests
+0. This option is mainly for those who modify the code or want to check the stability of the version.
+1. Press `Run unit tests (proto 2)` or `Run unit tests (proto 3)` button to start the tests.
+2. See Godot `Output` for details.
+3. All possilble errors details are displayed in Godot `Output`
+4. After task completion you'll see alert window which report you about tests result.<br/>
 
 ## Mapping of protocol buffers datatypes to GDScript
 
