@@ -1,7 +1,7 @@
 #
 # BSD 3-Clause License
 #
-# Copyright (c) 2018, Oleg Malyavkin
+# Copyright (c) 2018 - 2022, Oleg Malyavkin
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,12 +53,6 @@ func _on_OutputFileButton_pressed():
 func _on_InputFileDialog_file_selected(path):
 	input_file_name = path
 	$HBoxContainer/InputFileEdit.text = path
-#	
-#	var ext = input_file_name.get_extension()
-#	output_file_name = input_file_name.left(input_file_name.length() - ext.length()) + "gd"
-##
-#	$HBoxContainer2/OutputFileEdit.text = output_file_name
-#	$HBoxContainer2/OutputFileDialog.set_current_dir(_exstract_dir(output_file_name))
 
 func _on_OutputFileDialog_file_selected(path):
 	output_file_name = path
@@ -98,3 +92,40 @@ func _on_CompileButton_pressed():
 		show_dialog($FailAcceptDialog)
 	
 	return
+
+func execute_unit_tests(source_name, script_name, compiled_script_name):
+	
+	var test_path = "res://addons/protobuf/test/"
+	var test_file = File.new()
+	var input_file_path = test_path + "source/" + source_name
+	var output_dir_path = test_path + "temp"
+	var output_file_path = output_dir_path + "/" + compiled_script_name
+	
+	var output_dir = Directory.new();
+	output_dir.make_dir(output_dir_path)
+	
+	if test_file.open(input_file_path, File.READ) < 0:
+		print("File: '", input_file_path, "' not found.")
+		show_dialog($FailAcceptDialog)
+		return
+	
+	var parser = Parser.new()
+	
+	if parser.work("", input_file_path, output_file_path, "res://addons/protobuf/protobuf_core.gd"):
+		var test_script = load(test_path + "script/" + script_name).new(test_path, output_file_path)
+		if test_script.exec_all(false):
+			show_dialog($SuccessTestDialog)
+		else:
+			show_dialog($FailTestDialog)
+	else:
+		show_dialog($FailAcceptDialog)
+	
+	test_file.close()
+	
+	return
+
+func _on_TestButton2_pressed() :
+	execute_unit_tests("pbtest2.proto", "unit_tests_proto2.gd", "proto2.gd")
+
+func _on_TestButton3_pressed() :
+	execute_unit_tests("pbtest3.proto", "unit_tests_proto3.gd", "proto3.gd")

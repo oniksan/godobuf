@@ -62,9 +62,27 @@ margin_bottom = 92.0
 
 [node name="CompileButton" type="Button" parent="Control"]
 margin_top = 15.0
-margin_right = 73.0
+margin_right = 178.0
 margin_bottom = 35.0
 text = "Compile"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TestButton2" type="Button" parent="Control"]
+margin_top = 81.0
+margin_right = 178.0
+margin_bottom = 101.0
+text = "Run unit tests (proto 2)"
+
+[node name="TestButton3" type="Button" parent="Control"]
+margin_top = 109.0
+margin_right = 178.0
+margin_bottom = 129.0
+text = "Run unit tests (proto 3)"
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="InputFileDialog" type="FileDialog" parent="."]
 margin_left = 200.0
@@ -77,8 +95,8 @@ resizable = true
 mode = 0
 access = 2
 filters = PoolStringArray( "*.proto; Google Protobuf File" )
-current_dir = "C:/Users/robo/Documents/Новый3_1"
-current_path = "C:/Users/robo/Documents/Новый3_1/"
+current_dir = "/Projects/godot/godobuf"
+current_path = "/Projects/godot/godobuf/"
 
 [node name="InputFileDialog2" type="FileDialog" parent="."]
 margin_left = 200.0
@@ -91,8 +109,8 @@ resizable = true
 mode = 0
 access = 2
 filters = PoolStringArray( "*.proto; Google Protobuf File" )
-current_dir = "C:/Users/robo/Documents/Новый3_1"
-current_path = "C:/Users/robo/Documents/Новый3_1/"
+current_dir = "/Projects/godot/godobuf"
+current_path = "/Projects/godot/godobuf/"
 
 [node name="OutputFileDialog" type="FileDialog" parent="."]
 margin_left = 200.0
@@ -100,40 +118,59 @@ margin_top = 200.0
 margin_right = 700.0
 margin_bottom = 500.0
 popup_exclusive = true
+window_title = "Save file"
 resizable = true
 access = 2
 filters = PoolStringArray( "*.gd; GDScript" )
-current_dir = "C:/Users/robo/Documents/Новый3_1"
-current_path = "C:/Users/robo/Documents/Новый3_1/"
+current_dir = "/Projects/godot/godobuf"
+current_path = "/Projects/godot/godobuf/"
 
 [node name="FilesErrorAcceptDialog" type="AcceptDialog" parent="."]
 margin_right = 83.0
 margin_bottom = 58.0
 popup_exclusive = true
-window_title = "Alert!"
+window_title = "Error"
 dialog_text = "Need select both output & input files!"
 
 [node name="SuccessAcceptDialog" type="AcceptDialog" parent="."]
-margin_left = 8.0
-margin_top = 22.0
-margin_right = 250.0
-margin_bottom = 80.0
+margin_top = 96.0
+margin_right = 293.0
+margin_bottom = 154.0
 popup_exclusive = true
-window_title = "Alert!"
+window_title = "Success"
 dialog_text = "Compile success done."
 
 [node name="FailAcceptDialog" type="AcceptDialog" parent="."]
-margin_left = 8.0
-margin_top = 22.0
-margin_right = 250.0
-margin_bottom = 80.0
+margin_top = 96.0
+margin_right = 293.0
+margin_bottom = 154.0
 popup_exclusive = true
-window_title = "Alert!"
+window_title = "Error"
 dialog_text = "Compile fail. See details in console output."
+
+[node name="SuccessTestDialog" type="AcceptDialog" parent="."]
+margin_top = 96.0
+margin_right = 293.0
+margin_bottom = 171.0
+popup_exclusive = true
+window_title = "Tests completed"
+dialog_text = "All tests were completed successfully.
+See console for details."
+
+[node name="FailTestDialog" type="AcceptDialog" parent="."]
+margin_top = 96.0
+margin_right = 293.0
+margin_bottom = 171.0
+popup_exclusive = true
+window_title = "Error"
+dialog_text = "Errors occurred while running tests!
+See console for details."
 
 [connection signal="pressed" from="HBoxContainer/InputFileButton" to="." method="_on_InputFileButton_pressed"]
 [connection signal="pressed" from="HBoxContainer2/OutputFileButton" to="." method="_on_OutputFileButton_pressed"]
 [connection signal="pressed" from="Control/CompileButton" to="." method="_on_CompileButton_pressed"]
+[connection signal="pressed" from="Control/TestButton2" to="." method="_on_TestButton2_pressed"]
+[connection signal="pressed" from="Control/TestButton3" to="." method="_on_TestButton3_pressed"]
 [connection signal="file_selected" from="InputFileDialog" to="." method="_on_InputFileDialog_file_selected"]
 [connection signal="file_selected" from="InputFileDialog2" to="." method="_on_InputFileDialog_file_selected"]
 [connection signal="file_selected" from="OutputFileDialog" to="." method="_on_OutputFileDialog_file_selected"]

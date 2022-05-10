@@ -1,0 +1,124 @@
+syntax="proto3";
+
+message Test0 {
+
+}
+
+enum Enum0 {
+    NULL = 0;
+    ONE = 1;
+    TWO = 2;
+    THREE = 3;
+    FOUR = 4;
+}
+
+message Test1 {
+    double   f_double   = 1;
+    float    f_float    = 2;
+    int32    f_int32    = 3;
+    int64    f_int64    = 4;
+    uint32   f_uint32   = 5;
+    uint64   f_uint64   = 6;
+    sint32   f_sint32   = 7;
+    sint64   f_sint64   = 8;
+    fixed32  f_fixed32  = 9;
+    fixed64  f_fixed64  = 10;
+    sfixed32 f_sfixed32 = 11;
+    sfixed64 f_sfixed64 = 12;
+    bool     f_bool     = 13;
+    string   f_string   = 14;
+    bytes    f_bytes    = 15;
+    map<int32, int32> f_map = 16;
+    oneof f_oneof {
+        string      f_oneof_f1 = 17;
+        int32       f_oneof_f2 = 18;
+    }
+    Test0 f_empty_out              = 19;
+    Enum0 f_enum_out               = 20;
+    Test2.TestInner2 f_empty_inner = 21;
+    Test2.TestEnum f_enum_inner    = 22;
+
+    repeated double   rf_double   = 23;
+    repeated float    rf_float    = 24;
+    repeated int32    rf_int32    = 25;
+    repeated int64    rf_int64    = 26;
+    repeated uint32   rf_uint32   = 27;
+    repeated uint64   rf_uint64   = 28;
+    repeated sint32   rf_sint32   = 29;
+    repeated sint64   rf_sint64   = 30;
+    repeated fixed32  rf_fixed32  = 31;
+    repeated fixed64  rf_fixed64  = 32;
+    repeated sfixed32 rf_sfixed32 = 33;
+    repeated sfixed64 rf_sfixed64 = 34;
+    repeated bool     rf_bool     = 35;
+    repeated string   rf_string   = 36;
+    repeated bytes    rf_bytes    = 37;
+
+    repeated Test0 rf_empty_out              = 38;
+    repeated Enum0 rf_enum_out               = 39;
+    repeated Test2.TestInner2 rf_empty_inner = 40;
+    repeated Test2.TestEnum rf_enum_inner    = 41;
+
+    repeated double   rfu_double   = 42 [packed = false];
+    repeated float    rfu_float    = 43 [packed = false];
+    repeated int32    rfu_int32f   = 44 [packed = false];
+    repeated int64    rfu_int64f   = 45 [packed = false];
+    repeated uint32   rfu_uint32   = 46 [packed = false];
+    repeated uint64   rfu_uint64   = 47 [packed = false];
+    repeated sint32   rfu_sint32   = 48 [packed = false];
+    repeated sint64   rfu_sint64   = 49 [packed = false];
+    repeated fixed32  rfu_fixed32  = 50 [packed = false];
+    repeated fixed64  rfu_fixed64  = 51 [packed = false];
+    repeated sfixed32 rfu_sfixed32 = 52 [packed = false];
+    repeated sfixed64 rfu_sfixed64 = 53 [packed = false];
+    repeated bool     rfu_bool     = 54 [packed = false];
+
+    repeated Test2.TestInner3.TestInner3_2 rf_inner = 55;
+}
+
+message Test2 {
+    enum TestEnum {
+        VALUE_0 = 0;
+        VALUE_1 = 1;
+        VALUE_2 = 2;
+        VALUE_3 = 3;
+    }
+
+    message TestInner1 {
+        repeated double f1 = 1;
+        float           f2 = 2;
+        string          f3 = 3;
+    }
+
+    message TestInner2 { }
+
+    message TestInner3 {
+        message TestInner3_1 { }
+        message TestInner3_2 {
+            int32   f1 = 1;
+            uint64  f2 = 2;
+        }
+
+        map<string, TestInner3_2> f1 = 1;
+        TestEnum                  f2 = 2;
+        TestInner3_1              f3 = 3;
+    }
+
+    repeated string f1 = 1;
+    fixed64         f2 = 2;
+    oneof test_oneof {
+        string      f3 = 3;
+        TestInner3  f4 = 4;
+    }
+    TestInner2      f5 = 5;
+    TestInner3      f6 = 6;
+    TestInner1      f7 = 7;
+}
+
+message Test4 {
+    int32 f1 = 10;
+    string f2 = 3;
+    float f3 = 2;
+    double f4 = 160;
+    map<int32, int32> f5 = 99;
+}

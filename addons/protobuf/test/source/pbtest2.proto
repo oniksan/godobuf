@@ -1,0 +1,159 @@
+syntax="proto2";
+
+message Test0 {
+
+}
+
+enum Enum0 {
+    NULL = 0;
+    ONE = 1;
+    TWO = 2;
+    THREE = 3;
+    FOUR = 4;
+}
+
+message Test1 {
+    optional double   f_double   = 1;
+    optional float    f_float    = 2;
+    optional int32    f_int32    = 3;
+    optional int64    f_int64    = 4;
+    optional uint32   f_uint32   = 5;
+    optional uint64   f_uint64   = 6;
+    optional sint32   f_sint32   = 7;
+    optional sint64   f_sint64   = 8;
+    optional fixed32  f_fixed32  = 9;
+    optional fixed64  f_fixed64  = 10;
+    optional sfixed32 f_sfixed32 = 11;
+    optional sfixed64 f_sfixed64 = 12;
+    optional bool     f_bool     = 13;
+    optional string   f_string   = 14;
+    optional bytes    f_bytes    = 15;
+    map<int32, int32> f_map = 16;
+    oneof f_oneof {
+        string      f_oneof_f1 = 17;
+        int32       f_oneof_f2 = 18;
+    }
+    optional Test0 f_empty_out              = 19;
+    optional Enum0 f_enum_out               = 20;
+    optional Test2.TestInner2 f_empty_inner = 21;
+    optional Test2.TestEnum f_enum_inner    = 22;
+
+    repeated double   rf_double   = 23;
+    repeated float    rf_float    = 24;
+    repeated int32    rf_int32    = 25;
+    repeated int64    rf_int64    = 26;
+    repeated uint32   rf_uint32   = 27;
+    repeated uint64   rf_uint64   = 28;
+    repeated sint32   rf_sint32   = 29;
+    repeated sint64   rf_sint64   = 30;
+    repeated fixed32  rf_fixed32  = 31;
+    repeated fixed64  rf_fixed64  = 32;
+    repeated sfixed32 rf_sfixed32 = 33;
+    repeated sfixed64 rf_sfixed64 = 34;
+    repeated bool     rf_bool     = 35;
+    repeated string   rf_string   = 36;
+    repeated bytes    rf_bytes    = 37;
+
+    repeated Test0 rf_empty_out              = 38;
+    repeated Enum0 rf_enum_out               = 39;
+    repeated Test2.TestInner2 rf_empty_inner = 40;
+    repeated Test2.TestEnum rf_enum_inner    = 41;
+
+    repeated double   rfu_double   = 42 [packed = true];
+    repeated float    rfu_float    = 43 [packed = true];
+    repeated int32    rfu_int32    = 44 [packed = true];
+    repeated int64    rfu_int64    = 45 [packed = true];
+    repeated uint32   rfu_uint32   = 46 [packed = true];
+    repeated uint64   rfu_uint64   = 47 [packed = true];
+    repeated sint32   rfu_sint32   = 48 [packed = true];
+    repeated sint64   rfu_sint64   = 49 [packed = true];
+    repeated fixed32  rfu_fixed32  = 50 [packed = true];
+    repeated fixed64  rfu_fixed64  = 51 [packed = true];
+    repeated sfixed32 rfu_sfixed32 = 52 [packed = true];
+    repeated sfixed64 rfu_sfixed64 = 53 [packed = true];
+    repeated bool     rfu_bool     = 54 [packed = true];
+
+    repeated Test2.TestInner3.TestInner3_2 rf_inner = 55;
+}
+
+message Test2 {
+    enum TestEnum {
+        VALUE_0 = 0;
+        VALUE_1 = 1;
+        VALUE_2 = 2;
+        VALUE_3 = 3;
+    }
+
+    message TestInner1 {
+        repeated double f1 = 1;
+        optional float  f2 = 2;
+        optional string f3 = 3;
+    }
+
+    message TestInner2 { }
+
+    message TestInner3 {
+        message TestInner3_1 { }
+        message TestInner3_2 {
+            optional int32  f1 = 1;
+            optional uint64 f2 = 2;
+        }
+
+        map<string, TestInner3_2> f1 = 1;
+        optional TestEnum         f2 = 2;
+        optional TestInner3_1     f3 = 3;
+    }
+
+    repeated string  f1 = 1;
+    optional fixed64 f2 = 2;
+    oneof test_oneof {
+        string      f3 = 3;
+        TestInner3  f4 = 4;
+    }
+    optional TestInner2 f5 = 5;
+    optional TestInner3 f6 = 6;
+    optional TestInner1 f7 = 7;
+}
+
+message Test3 {
+    message InnerReq {
+        required int32 f1 = 1;
+    }
+
+    message InnerOpt {
+        optional int32 f1 = 1;
+    }
+
+    message InnerRep {
+        repeated int32 f1 = 1;
+    }
+
+    required int32 f_req_int32        = 1;
+    required float f_req_float        = 2;
+    required string f_req_string      = 3;
+    required InnerReq f_req_inner_req = 4;
+    required InnerOpt f_req_inner_opt = 5;
+    required InnerRep f_req_inner_rep = 6;
+
+    optional int32 f_opt_int32        = 7;
+    optional float f_opt_float        = 8;
+    optional string f_opt_string      = 9;
+    optional InnerReq f_opt_inner_req = 10;
+    optional InnerOpt f_opt_inner_opt = 11;
+    optional InnerRep f_opt_inner_rep = 12;
+
+    repeated int32 f_rep_int32        = 13;
+    repeated float f_rep_float        = 14;
+    repeated string f_rep_string      = 15;
+    repeated InnerReq f_rep_inner_req = 16;
+    repeated InnerOpt f_rep_inner_opt = 17;
+    repeated InnerRep f_rep_inner_rep = 18;
+}
+
+message Test4 {
+    optional int32 f1 = 10;
+    optional string f2 = 3;
+    optional float f3 = 2;
+    optional double f4 = 160;
+    map<int32, int32> f5 = 99;
+}

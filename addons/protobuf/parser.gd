@@ -1,7 +1,7 @@
 #
 # BSD 3-Clause License
 #
-# Copyright (c) 2018 - 2020, Oleg Malyavkin
+# Copyright (c) 2018 - 2022, Oleg Malyavkin
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -1075,7 +1075,7 @@ class Analysis:
 			return ASTEnumValue.new(name, value)
 	
 	class ASTField:
-		func _init(t, n : String, tn : String, p : int, q : int, o : int, ci : int):
+		func _init(t, n : String, tn : String, p : int, q : int, o : int, ci : int, mf : bool):
 			tag = t
 			name = n
 			type_name = tn
@@ -1083,6 +1083,7 @@ class Analysis:
 			qualificator = q
 			option = o
 			construction_index = ci
+			is_map_field = mf
 		
 		var tag
 		var name : String
@@ -1091,11 +1092,12 @@ class Analysis:
 		var qualificator : int
 		var option : int
 		var construction_index : int
+		var is_map_field : bool
 		var field_type : int = FIELD_TYPE.UNDEFINED
 		var type_class_id : int = -1
 		
 		func copy() -> ASTField:
-			var res : ASTField = ASTField.new(tag, name, type_name, parent_class_id, qualificator, option, construction_index)
+			var res : ASTField = ASTField.new(tag, name, type_name, parent_class_id, qualificator, option, construction_index, is_map_field)
 			res.field_type = field_type
 			res.type_class_id = type_class_id
 			return res
@@ -1265,7 +1267,7 @@ class Analysis:
 					result.description = "Using the 'required', 'optional' or 'repeated' qualificator is unacceptable in 'OneOf' field."
 					return result
 				group_table[group_table.size() - 1].field_indexes.append(field_table.size())
-		field_table.append(ASTField.new(tag, field_name, type_name, settings.parent_index, qualifcator, option, settings.construction_index))
+		field_table.append(ASTField.new(tag, field_name, type_name, settings.parent_index, qualifcator, option, settings.construction_index, false))
 		return result
 	
 	func desc_map_field(indexed_tokens : Array, settings : CompareSettings) -> DescriptionResult:
@@ -1305,10 +1307,10 @@ class Analysis:
 				group_table[group_table.size() - 1].field_indexes.append(field_table.size())
 				
 		class_table.append(ASTClass.new("map_type_" + field_name, CLASS_TYPE.MAP, settings.parent_index, settings.parent_name, "", settings.construction_index))
-		field_table.append(ASTField.new(tag, field_name, "map_type_" + field_name, settings.parent_index, qualifcator, option, settings.construction_index))
+		field_table.append(ASTField.new(tag, field_name, "map_type_" + field_name, settings.parent_index, qualifcator, option, settings.construction_index, false))
 		
-		field_table.append(ASTField.new(1, "key", key_type_name, class_table.size() - 1, FIELD_QUALIFICATOR.REQUIRED, option, settings.construction_index))
-		field_table.append(ASTField.new(2, "value", type_name, class_table.size() - 1, FIELD_QUALIFICATOR.REQUIRED, option, settings.construction_index))
+		field_table.append(ASTField.new(1, "key", key_type_name, class_table.size() - 1, FIELD_QUALIFICATOR.REQUIRED, option, settings.construction_index, true))
+		field_table.append(ASTField.new(2, "value", type_name, class_table.size() - 1, FIELD_QUALIFICATOR.REQUIRED, option, settings.construction_index, true))
 		
 		return result
 	
@@ -1742,6 +1744,8 @@ class Translator:
 			pbfield_text += ", " + default_dict_text() + "[" + generate_field_type(f) + "]"
 		pbfield_text += ")\n"
 		text += tabulate(pbfield_text, nesting)
+		if f.is_map_field:
+			text += tabulate(field_name + ".is_map_field = true\n", nesting)
 		text += tabulate("service = PBServiceField.new()\n", nesting)
 		text += tabulate("service.field = " + field_name + "\n", nesting)
 		if f.field_type == Analysis.FIELD_TYPE.MESSAGE:
@@ -1801,15 +1805,17 @@ class Translator:
 			text += tabulate("func clear_" + f.name + "() -> void:\n", nesting)
 			nesting += 1
 			text += tabulate("data[" + String(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
-			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
-			nesting -= 1
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
+				text += tabulate("_" + f.name + ".value = []\n", nesting)
+				nesting -= 1
 				text += tabulate("func add_" + f.name + "() -> " + the_class_name + ":\n", nesting)
 				nesting += 1
 				text += tabulate("var element = " + the_class_name + ".new()\n", nesting)
 				text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
 				text += tabulate("return element\n", nesting)
 			else:
+				text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]\n", nesting)
+				nesting -= 1
 				text += tabulate("func new_" + f.name + "() -> " + the_class_name + ":\n", nesting)
 				nesting += 1
 				text += generate_group_clear(field_index, nesting)
@@ -1830,7 +1836,7 @@ class Translator:
 			text += tabulate("func clear_" + f.name + "():\n", nesting)
 			nesting += 1
 			text += tabulate("data[" + String(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
-			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
+			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]\n", nesting)
 			nesting -= 1
 			for i in range(field_table.size()):
 				if field_table[i].parent_class_id == f.type_class_id && field_table[i].name == "value":
@@ -1912,13 +1918,15 @@ class Translator:
 			text += tabulate("func clear_" + f.name + "() -> void:\n", nesting)
 			nesting += 1
 			text += tabulate("data[" + String(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
-			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]" + "\n", nesting)
-			nesting -= 1
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
+				text += tabulate("_" + f.name + ".value = []\n", nesting)
+				nesting -= 1
 				text += tabulate("func add_" + f.name + "(value" + argument_type + ") -> void:\n", nesting)
 				nesting += 1
 				text += tabulate("_" + f.name + ".value.append(value)\n", nesting)
 			else:
+				text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]\n", nesting)
+				nesting -= 1
 				text += tabulate("func set_" + f.name + "(value" + argument_type + ") -> void:\n", nesting)
 				nesting += 1
 				text += generate_group_clear(field_index, nesting)

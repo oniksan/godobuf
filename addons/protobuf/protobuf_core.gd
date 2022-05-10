@@ -1,7 +1,7 @@
 #
 # BSD 3-Clause License
 #
-# Copyright (c) 2018 - 2020, Oleg Malyavkin
+# Copyright (c) 2018 - 2022, Oleg Malyavkin
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -138,12 +138,14 @@ class PBField:
 		tag = a_tag
 		option_packed = packed
 		value = a_value
+		
 	var name : String
 	var type : int
 	var rule : int
 	var tag : int
 	var option_packed : bool
 	var value
+	var is_map_field : bool = false
 	var option_default : bool = false
 
 class PBTypeTag:
@@ -346,11 +348,6 @@ class PBPacker:
 				elif typeof(field.value[0]) == TYPE_OBJECT:
 					for v in field.value:
 						var obj : PoolByteArray = v.to_bytes()
-						#if obj != null && obj.size() > 0:
-						#	data.append_array(pack_length_delimeted(type, field.tag, obj))
-						#else:
-						#	data = PoolByteArray()
-						#	return data
 						data.append_array(pack_length_delimeted(type, field.tag, obj))
 					return data
 			else:
@@ -365,9 +362,6 @@ class PBPacker:
 						return pack_length_delimeted(type, field.tag, data)
 				elif typeof(field.value) == TYPE_OBJECT:
 					var obj : PoolByteArray = field.value.to_bytes()
-					#if obj != null && obj.size() > 0:
-					#	data.append_array(obj)
-					#	return pack_length_delimeted(type, field.tag, data)
 					if obj.size() > 0:
 						data.append_array(obj)
 					return pack_length_delimeted(type, field.tag, data)
@@ -538,7 +532,10 @@ class PBPacker:
 		keys.sort()
 		for i in keys:
 			if data[i].field.value != null:
-				if data[i].state == PB_SERVICE_STATE.UNFILLED && typeof(data[i].field.value) == typeof(DEFAULT_VALUES[data[i].field.type]) && data[i].field.value == DEFAULT_VALUES[data[i].field.type]:
+				if data[i].state == PB_SERVICE_STATE.UNFILLED \
+				&& !data[i].field.is_map_field \
+				&& typeof(data[i].field.value) == typeof(DEFAULT_VALUES[data[i].field.type]) \
+				&& data[i].field.value == DEFAULT_VALUES[data[i].field.type]:
 					continue
 				elif data[i].field.rule == PB_RULE.REPEATED && data[i].field.value.size() == 0:
 					continue
@@ -644,7 +641,10 @@ class PBPacker:
 		keys.sort()
 		for i in keys:
 			if data[i].field.value != null:
-				if data[i].state == PB_SERVICE_STATE.UNFILLED && typeof(data[i].field.value) == typeof(DEFAULT_VALUES[data[i].field.type]) && data[i].field.value == DEFAULT_VALUES[data[i].field.type]:
+				if data[i].state == PB_SERVICE_STATE.UNFILLED \
+				&& !data[i].field.is_map_field \
+				&& typeof(data[i].field.value) == typeof(DEFAULT_VALUES[data[i].field.type]) \
+				&& data[i].field.value == DEFAULT_VALUES[data[i].field.type]:
 					continue
 				elif data[i].field.rule == PB_RULE.REPEATED && data[i].field.value.size() == 0:
 					continue
