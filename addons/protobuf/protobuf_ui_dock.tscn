@@ -1,176 +1,101 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=2 format=3 uid="uid://b45d0povtiecd"]
 
-[ext_resource path="res://addons/protobuf/protobuf_ui_dock.gd" type="Script" id=1]
+[ext_resource type="Script" path="res://addons/protobuf/protobuf_ui_dock.gd" id="1"]
 
 [node name="Godobuf" type="VBoxContainer"]
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_right = -731.0
-margin_bottom = -374.0
 size_flags_horizontal = 0
-script = ExtResource( 1 )
+script = ExtResource("1")
 
 [node name="InputFileLabel" type="Label" parent="."]
-margin_right = 293.0
-margin_bottom = 14.0
+layout_mode = 2
 text = "Input protobuf file:"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
-margin_top = 18.0
-margin_right = 293.0
-margin_bottom = 42.0
+layout_mode = 2
 
 [node name="InputFileEdit" type="LineEdit" parent="HBoxContainer"]
-margin_right = 150.0
-margin_bottom = 24.0
-rect_min_size = Vector2( 150, 0 )
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 editable = false
 
 [node name="InputFileButton" type="Button" parent="HBoxContainer"]
-margin_left = 154.0
-margin_right = 178.0
-margin_bottom = 24.0
-text = "..."
+layout_mode = 2
+size_flags_horizontal = 4
+text = "   ...   "
 
 [node name="OutputFileButton" type="Label" parent="."]
-margin_top = 46.0
-margin_right = 293.0
-margin_bottom = 60.0
+layout_mode = 2
 text = "Output GDScript file:"
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="."]
-margin_top = 64.0
-margin_right = 293.0
-margin_bottom = 88.0
+layout_mode = 2
 
 [node name="OutputFileEdit" type="LineEdit" parent="HBoxContainer2"]
-margin_right = 150.0
-margin_bottom = 24.0
-rect_min_size = Vector2( 150, 0 )
+layout_mode = 2
+size_flags_horizontal = 3
 editable = false
 
 [node name="OutputFileButton" type="Button" parent="HBoxContainer2"]
-margin_left = 154.0
-margin_right = 178.0
-margin_bottom = 24.0
-text = "..."
+layout_mode = 2
+text = "   ...   "
 
-[node name="Control" type="Control" parent="."]
-margin_top = 92.0
-margin_right = 293.0
-margin_bottom = 92.0
-
-[node name="CompileButton" type="Button" parent="Control"]
-margin_top = 15.0
-margin_right = 178.0
-margin_bottom = 35.0
+[node name="CompileButton" type="Button" parent="."]
+layout_mode = 2
 text = "Compile"
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
-[node name="TestButton2" type="Button" parent="Control"]
-margin_top = 81.0
-margin_right = 178.0
-margin_bottom = 101.0
+[node name="Container" type="Container" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TestButton2" type="Button" parent="."]
+layout_mode = 2
 text = "Run unit tests (proto 2)"
 
-[node name="TestButton3" type="Button" parent="Control"]
-margin_top = 109.0
-margin_right = 178.0
-margin_bottom = 129.0
+[node name="TestButton3" type="Button" parent="."]
+layout_mode = 2
 text = "Run unit tests (proto 3)"
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="InputFileDialog" type="FileDialog" parent="."]
-margin_left = 200.0
-margin_top = 200.0
-margin_right = 700.0
-margin_bottom = 500.0
-popup_exclusive = true
-window_title = "Открыть файл"
-resizable = true
-mode = 0
+title = "Open a File"
+ok_button_text = "打开"
+file_mode = 0
 access = 2
-filters = PoolStringArray( "*.proto; Google Protobuf File" )
-current_dir = "/Projects/godot/godobuf"
-current_path = "/Projects/godot/godobuf/"
+filters = PackedStringArray("*.proto; Google Protobuf File")
 
 [node name="InputFileDialog2" type="FileDialog" parent="."]
-margin_left = 200.0
-margin_top = 200.0
-margin_right = 700.0
-margin_bottom = 500.0
-popup_exclusive = true
-window_title = "Открыть файл"
-resizable = true
-mode = 0
 access = 2
-filters = PoolStringArray( "*.proto; Google Protobuf File" )
-current_dir = "/Projects/godot/godobuf"
-current_path = "/Projects/godot/godobuf/"
+filters = PackedStringArray("*.proto; Google Protobuf File")
 
 [node name="OutputFileDialog" type="FileDialog" parent="."]
-margin_left = 200.0
-margin_top = 200.0
-margin_right = 700.0
-margin_bottom = 500.0
-popup_exclusive = true
-window_title = "Save file"
-resizable = true
 access = 2
-filters = PoolStringArray( "*.gd; GDScript" )
-current_dir = "/Projects/godot/godobuf"
-current_path = "/Projects/godot/godobuf/"
+filters = PackedStringArray("*.gd; GDScript")
 
 [node name="FilesErrorAcceptDialog" type="AcceptDialog" parent="."]
-margin_right = 83.0
-margin_bottom = 58.0
-popup_exclusive = true
-window_title = "Error"
 dialog_text = "Need select both output & input files!"
 
 [node name="SuccessAcceptDialog" type="AcceptDialog" parent="."]
-margin_top = 96.0
-margin_right = 293.0
-margin_bottom = 154.0
-popup_exclusive = true
-window_title = "Success"
-dialog_text = "Compile success done."
-
-[node name="FailAcceptDialog" type="AcceptDialog" parent="."]
-margin_top = 96.0
-margin_right = 293.0
-margin_bottom = 154.0
-popup_exclusive = true
-window_title = "Error"
-dialog_text = "Compile fail. See details in console output."
+size = Vector2i(190, 100)
+dialog_text = "Compilation successful."
 
 [node name="SuccessTestDialog" type="AcceptDialog" parent="."]
-margin_top = 96.0
-margin_right = 293.0
-margin_bottom = 171.0
-popup_exclusive = true
-window_title = "Tests completed"
-dialog_text = "All tests were completed successfully.
-See console for details."
+size = Vector2i(190, 100)
+dialog_text = "Compilation successful."
+
+[node name="FailAcceptDialog" type="AcceptDialog" parent="."]
+dialog_text = "Compile fail. See details in console output."
 
 [node name="FailTestDialog" type="AcceptDialog" parent="."]
-margin_top = 96.0
-margin_right = 293.0
-margin_bottom = 171.0
-popup_exclusive = true
-window_title = "Error"
-dialog_text = "Errors occurred while running tests!
-See console for details."
+dialog_text = "Compile fail. See details in console output."
 
 [connection signal="pressed" from="HBoxContainer/InputFileButton" to="." method="_on_InputFileButton_pressed"]
 [connection signal="pressed" from="HBoxContainer2/OutputFileButton" to="." method="_on_OutputFileButton_pressed"]
-[connection signal="pressed" from="Control/CompileButton" to="." method="_on_CompileButton_pressed"]
-[connection signal="pressed" from="Control/TestButton2" to="." method="_on_TestButton2_pressed"]
-[connection signal="pressed" from="Control/TestButton3" to="." method="_on_TestButton3_pressed"]
+[connection signal="pressed" from="CompileButton" to="." method="_on_CompileButton_pressed"]
+[connection signal="pressed" from="TestButton2" to="." method="_on_TestButton2_pressed"]
+[connection signal="pressed" from="TestButton3" to="." method="_on_TestButton3_pressed"]
 [connection signal="file_selected" from="InputFileDialog" to="." method="_on_InputFileDialog_file_selected"]
 [connection signal="file_selected" from="InputFileDialog2" to="." method="_on_InputFileDialog_file_selected"]
 [connection signal="file_selected" from="OutputFileDialog" to="." method="_on_OutputFileDialog_file_selected"]

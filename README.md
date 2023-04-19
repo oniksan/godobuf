@@ -1,3 +1,9 @@
+## Changelog in v0.7
+- Make Godobuf compatible with Godot v4.0.1 stable
+
+## Changelog in v0.6
+- Make Godobuf compatible with Godot v4 Alpha
+
 # Godobuf v0.5.0
 
 ## Changelog in v0.5.0
@@ -8,6 +14,13 @@
 ## What's new in v0.4.4
 - Added support Command Line interface
 - Code generator bug fixed
+
+# Godobuf v0.5.0
+
+## What's new in v0.4.0
+Added support for static typing for the GDScript https://docs.godotengine.org/en/latest/getting_started/scripting/gdscript/static_typing.html in generated code and entire service code.<br/>
+API compatibility with previous versions saved.<br/>
+If anyone has problems using, create issue.
 
 
 ## Version
@@ -516,8 +529,8 @@ field_enum: ENUM::2;
 
 field_message_1: {
   field_message_2: {
-    field_int: 12;
-    field_float: 12.34;
+	field_int: 12;
+	field_float: 12.34;
   }
   field_bool: True;
   field_string: "test";
@@ -525,12 +538,12 @@ field_message_1: {
 
 field_repeated: [
   0: {
-    field_int: 123;
-    field_bool: True;
+	field_int: 123;
+	field_bool: True;
   },
   1: {
-    field_int: 454;
-    field_bool: False;
+	field_int: 454;
+	field_bool: False;
   }
 ];
 
@@ -547,12 +560,12 @@ field_map: (
 
 field_map: (
   "object1": {
-    field_int: 123;
-    field_bool: True;
+	field_int: 123;
+	field_bool: True;
   },
   "object2": {
-    field_int: 454;
-    field_bool: False;
+	field_int: 454;
+	field_bool: False;
   }
 );
 

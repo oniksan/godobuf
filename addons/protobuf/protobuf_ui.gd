@@ -29,15 +29,15 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-tool
+@tool
 extends EditorPlugin
 
 var dock
 
 func _enter_tree():
 	# Initialization of the plugin goes here
-	# First load the dock scene and instance it:
-	dock = preload("res://addons/protobuf/protobuf_ui_dock.tscn").instance()
+	# First load the dock scene and instantiate it:
+	dock = preload("res://addons/protobuf/protobuf_ui_dock.tscn").instantiate()
 
 	# Add the loaded scene to the docks:
 	add_control_to_dock(DOCK_SLOT_LEFT_BR, dock)

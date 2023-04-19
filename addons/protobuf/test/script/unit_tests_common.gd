@@ -29,7 +29,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-tool
+@tool
 extends Node
 
 var P
@@ -161,8 +161,8 @@ func exec(test, save_to_file, test_names) -> bool:
 	print("protobuf unpack success done " + str(protobuf_success_unpack_counter) + " of " + str(tests_counter))
 	
 	return success_pack_counter == tests_counter \
-	 && godot_success_unpack_counter == tests_counter \
-	 && protobuf_success_unpack_counter == tests_counter
+	&& godot_success_unpack_counter == tests_counter \
+	&& protobuf_success_unpack_counter == tests_counter
 
 func object_equal(packed_object, restored_object):
 	for data_key in packed_object.data:
