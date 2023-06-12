@@ -1,26 +1,27 @@
-# Godobuf v0.5.0
+# Godobuf v0.6.0
 
-## Changelog in v0.5.0
+## Changelog in v0.6.0
+- Added support for Godot 4
+- Fixed bug with return type in add method for map
+
+## What's new in v0.5.0
 - Implemented unit tests
 - Fixed repeat field clearing bug
 - Fixed map bug with default values
 
-## What's new in v0.4.4
-- Added support Command Line interface
-- Code generator bug fixed
-
 
 ## Version
-Current Godobuf master branch used for Godot version 3.2.<br/>
+Current Godobuf master branch used for Godot version 4.0.<br/>
 If you want use Godobuf plugin for other Godot versions see:
 - 3.0.x use branch tagged v0.2.2 https://github.com/oniksan/godobuf/tree/v0.2.2
 - 3.1.x use branch tagged v0.3.0 https://github.com/oniksan/godobuf/tree/v0.3.0
+- 3.5.x use branch tagged v0.3.0 https://github.com/oniksan/godobuf/tree/v0.5.0
 
 
 ## About
 Godobuf is a Google Protocol buffers compiler from .proto-file description to GDScript output file.
 Output file contains user protobuf messages represented by classes and protobuf core code which responsible for data serialization/deserialization.
-Godobuf used as plugin for Godot v3.2<br/>
+Godobuf used as plugin for Godot v4.0<br/>
 Godobuf is easy to use, does not require rebuilding the Godot, because it is written in GDScript. All you need is to start the plugin.
 
 ## Features

@@ -1,3 +1,4 @@
+@tool
 #
 # BSD 3-Clause License
 #
@@ -29,7 +30,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-tool
 extends Node
 
 var P
@@ -60,12 +60,12 @@ func binary_check(test_name : String, godot_rv) -> BinCheckResult:
 	var result_string : String
 	var result : bool = false
 	var binary_string : String = "[no data]"
-	var ref_file = File.new()
-	var ref_file_path = root_path + "/expected_bin/proto" + protobuf_version + "/" + test_name + ".v" + protobuf_version + "ref";
+	var ref_file_path = root_path + "/expected_bin/proto" + protobuf_version + "/" + test_name + ".v" + protobuf_version + "ref"
 	var ref_rv = null
-	if ref_file.file_exists(ref_file_path):
-		if ref_file.open(ref_file_path, ref_file.READ) == 0:
-			ref_rv = ref_file.get_buffer(ref_file.get_len())
+	if FileAccess.file_exists(ref_file_path):
+		var ref_file = FileAccess.open(ref_file_path, FileAccess.READ)
+		if ref_file != null:
+			ref_rv = ref_file.get_buffer(ref_file.get_length())
 			binary_string = str_raw_array(ref_rv)
 			if godot_rv.size() == ref_rv.size():
 				var equal = true
@@ -77,16 +77,17 @@ func binary_check(test_name : String, godot_rv) -> BinCheckResult:
 						break
 				if equal:
 					result_string = "SUCCESS"
-					result = true;
+					result = true
 				else:
 					result_string = "FAIL: test data for '" + test_name + "' not equal at " + str(fail_index)
 			else:
 				result_string = "FAIL: test data length for '" + test_name + "' not equal"
+			ref_file.close()
 		else:
 			result_string = "FAIL: can't read '" + ref_file_path + "'"
 	else:
 		result_string = "FAIL: '" + ref_file_path + "' not exist"
-	return BinCheckResult.new(binary_string, result_string, ref_rv, result);
+	return BinCheckResult.new(binary_string, result_string, ref_rv, result)
 
 const FUNC_NAME = 0
 const CLASS_NAME = 1
@@ -100,20 +101,20 @@ func exec(test, save_to_file, test_names) -> bool:
 	for test_name in test_names:
 		tests_counter += 1
 		print("----- ", test_name[FUNC_NAME], " -----")
-		var test_func = funcref(test, test_name[FUNC_NAME])
+		var test_func = Callable(test, test_name[FUNC_NAME])
 		var packed_object = test_name[CLASS_NAME].new()
-		var godot_rv = test_func.call_func(packed_object)
+		var godot_rv = test_func.call(packed_object)
 		if save_to_file:
-			var out_file_name = root_path + "/temp/" + test_name[FUNC_NAME] + ".v" + protobuf_version + "godobuf";
-			var out_file = File.new()
-			if out_file.open(out_file_name, out_file.WRITE) == 0:
+			var out_file_name = root_path + "/temp/" + test_name[FUNC_NAME] + ".v" + protobuf_version + "godobuf"
+			var out_file = FileAccess.open(out_file_name, FileAccess.WRITE)
+			if out_file != null:
 				out_file.store_buffer(godot_rv)
 				out_file.close()
 			else:
 				print("failed write out file: ", out_file_name)
 				
 		# compare bin dumps
-		var iteration = 0;
+		var iteration = 0
 		var bin_result = binary_check(test_name[FUNC_NAME], godot_rv)
 		if !bin_result.result:
 			while test_name.size() > iteration + 2:

@@ -31,7 +31,7 @@
 
 static func extract_dir(file_path):
 	var parts = file_path.split("/", false)
-	parts.remove(parts.size() - 1)
+	parts.remove_at(parts.size() - 1)
 	var path
 	if file_path.begins_with("/"):
 		path = "/"

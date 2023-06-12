@@ -36,7 +36,6 @@ var Util = preload("res://addons/protobuf/protobuf_util.gd")
 
 func error(msg : String):
 	push_error(msg)
-	OS.exit_code = 1
 	quit()
 
 func _init():
@@ -52,8 +51,8 @@ func _init():
 	var input_file_name = arguments["input"]
 	var output_file_name = arguments["output"]
 
-	var file = File.new()
-	if file.open(input_file_name, File.READ) < 0:
+	var file = FileAccess.open(input_file_name, FileAccess.READ)
+	if file == null:
 		error("File: '" + input_file_name + "' not found.")
 
 	var parser = Parser.new()

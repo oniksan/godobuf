@@ -1,7 +1,8 @@
+@tool
 #
 # BSD 3-Clause License
 #
-# Copyright (c) 2018 - 2022, Oleg Malyavkin
+# Copyright (c) 2018 - 2023, Oleg Malyavkin
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,90 +30,88 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-tool
 extends VBoxContainer
 
 var Parser = preload("res://addons/protobuf/parser.gd")
 var Util = preload("res://addons/protobuf/protobuf_util.gd")
 
-var input_file_name = null
-var output_file_name = null
+var input_file_path = null
+var output_file_path = null
 
 func _ready():
-	var screen_size = OS.get_screen_size()
 	pass
 
 func _on_InputFileButton_pressed():
+	
 	show_dialog($InputFileDialog)
 	$InputFileDialog.invalidate()
 
 func _on_OutputFileButton_pressed():
+	
 	show_dialog($OutputFileDialog)
 	$OutputFileDialog.invalidate()
 
 func _on_InputFileDialog_file_selected(path):
-	input_file_name = path
+	
+	input_file_path = path
 	$HBoxContainer/InputFileEdit.text = path
 
 func _on_OutputFileDialog_file_selected(path):
-	output_file_name = path
+	
+	output_file_path = path
 	$HBoxContainer2/OutputFileEdit.text = path
 
 func show_dialog(dialog):
-	var posX
-	var posY
-	if get_viewport().size.x <= dialog.get_rect().size.x:
-		posX = 0
-	else:
-		posX = (get_viewport().size.x - dialog.get_rect().size.x) / 2
-	if get_viewport().size.y <= dialog.get_rect().size.y:
-		posY = 0
-	else:
-		posY = (get_viewport().size.y - dialog.get_rect().size.y) / 2
-	dialog.set_position(Vector2(posX, posY))
-	dialog.show_modal(true)
+	
+	dialog.popup_centered()
 
 func _on_CompileButton_pressed():
-	if input_file_name == null || output_file_name == null:
+	
+	if input_file_path == null || output_file_path == null:
 		show_dialog($FilesErrorAcceptDialog)
 		return
 	
-	var file = File.new()
-	if file.open(input_file_name, File.READ) < 0:
-		print("File: '", input_file_name, "' not found.")
-		show_dialog($FailAcceptDialog)
-		return
-	
-	var parser = Parser.new()
-	
-	if parser.work(Util.extract_dir(input_file_name), Util.extract_filename(input_file_name), \
-		output_file_name, "res://addons/protobuf/protobuf_core.gd"):
-		show_dialog($SuccessAcceptDialog)
-	else:
-		show_dialog($FailAcceptDialog)
-	
-	return
-
-func execute_unit_tests(source_name, script_name, compiled_script_name):
-	
-	var test_path = "res://addons/protobuf/test/"
-	var test_file = File.new()
-	var input_file_path = test_path + "source/" + source_name
-	var output_dir_path = test_path + "temp"
-	var output_file_path = output_dir_path + "/" + compiled_script_name
-	
-	var output_dir = Directory.new();
-	output_dir.make_dir(output_dir_path)
-	
-	if test_file.open(input_file_path, File.READ) < 0:
+	var file = FileAccess.open(input_file_path, FileAccess.READ)
+	if file == null:
 		print("File: '", input_file_path, "' not found.")
 		show_dialog($FailAcceptDialog)
 		return
 	
 	var parser = Parser.new()
 	
-	if parser.work("", input_file_path, output_file_path, "res://addons/protobuf/protobuf_core.gd"):
-		var test_script = load(test_path + "script/" + script_name).new(test_path, output_file_path)
+	if parser.work(Util.extract_dir(input_file_path), Util.extract_filename(input_file_path), \
+		output_file_path, "res://addons/protobuf/protobuf_core.gd"):
+		show_dialog($SuccessAcceptDialog)
+	else:
+		show_dialog($FailAcceptDialog)
+	
+	file.close()
+	
+	return
+
+func execute_unit_tests(source_name, script_name, compiled_script_name):
+	
+	var test_path = "res://addons/protobuf/test/"
+	var test_input_file_path = test_path + "source/" + source_name
+	var test_output_dir_path = test_path + "temp"
+	var test_output_file_path = test_output_dir_path + "/" + compiled_script_name
+	
+	var output_dir = DirAccess.make_dir_absolute(test_output_dir_path)
+	if output_dir == null:
+		print("Cannot create output directory: '", test_output_dir_path, "'.")
+		show_dialog($FailAcceptDialog)
+		return
+	
+	var test_file = FileAccess.open(test_input_file_path, FileAccess.READ)
+	if test_file == null:
+		print("File: '", input_file_path, "' not found.")
+		show_dialog($FailAcceptDialog)
+		return
+	
+	var parser = Parser.new()
+	
+	if parser.work("", test_input_file_path, test_output_file_path, "res://addons/protobuf/protobuf_core.gd"):
+		var test_script = load(test_path + "script/" + script_name).new(test_path, test_output_file_path)
 		if test_script.exec_all(false):
 			show_dialog($SuccessTestDialog)
 		else:
@@ -125,7 +124,9 @@ func execute_unit_tests(source_name, script_name, compiled_script_name):
 	return
 
 func _on_TestButton2_pressed() :
+	
 	execute_unit_tests("pbtest2.proto", "unit_tests_proto2.gd", "proto2.gd")
 
 func _on_TestButton3_pressed() :
+	
 	execute_unit_tests("pbtest3.proto", "unit_tests_proto3.gd", "proto3.gd")
