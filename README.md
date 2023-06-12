@@ -15,7 +15,7 @@ Current Godobuf master branch used for Godot version 4.0.<br/>
 If you want use Godobuf plugin for other Godot versions see:
 - 3.0.x use branch tagged v0.2.2 https://github.com/oniksan/godobuf/tree/v0.2.2
 - 3.1.x use branch tagged v0.3.0 https://github.com/oniksan/godobuf/tree/v0.3.0
-- 3.5.x use branch tagged v0.3.0 https://github.com/oniksan/godobuf/tree/v0.5.0
+- 3.5.x use branch tagged v0.5.0 https://github.com/oniksan/godobuf/tree/v0.5.0
 
 
 ## About
