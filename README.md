@@ -76,7 +76,7 @@ Godobuf is easy to use, does not require rebuilding the Godot, because it is wri
 10. Use script in you project.
 
 ### From the Command Line
-1. From the root folder of your project, run `godot -s addons/protobuf/protobuf_cmdln.gd --input=A.proto --output=my_proto.gd`
+1. From the root folder of your project, run `godot --headless -s addons/protobuf/protobuf_cmdln.gd --input=A.proto --output=my_proto.gd`
 2. Optionally, define an alias: `alias godobuf='godot -s addons/protobuf/protobuf_cmdln.gd'`
 
 ### Unit tests
