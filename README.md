@@ -40,7 +40,7 @@ Godobuf is easy to use, does not require rebuilding the Godot, because it is wri
 - Packages
 - Reserved statements
 - Services
-- Any types
+- `Any` types
 - Default values option for fields
 
 ## Installation
