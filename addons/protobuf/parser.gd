@@ -1797,7 +1797,7 @@ class Translator:
 			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
 			text += generate_has_oneof(field_index, nesting)
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-				text += tabulate("func get_" + f.name + "() -> Array:\n", nesting)
+				text += tabulate("func get_" + f.name + "() -> Array[" + the_class_name + "]:\n", nesting)
 			else:
 				text += tabulate("func get_" + f.name + "() -> " + the_class_name + ":\n", nesting)
 			nesting += 1
@@ -1913,7 +1913,8 @@ class Translator:
 				argument_type = " : " + gd_type
 			text += generate_has_oneof(field_index, nesting)
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-				text += tabulate("func get_" + f.name + "() -> Array:\n", nesting)
+				var array_type := "[" + gd_type + "]" if gd_type else ""
+				text += tabulate("func get_" + f.name + "() -> Array" + array_type + ":\n", nesting)
 			else:
 				text += tabulate("func get_" + f.name + "()" + return_type + ":\n", nesting)
 			nesting += 1
