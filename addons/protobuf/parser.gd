@@ -1691,6 +1691,12 @@ class Translator:
 			return text + "RESERVED"
 		return text
 	
+	func generate_gdscript_type(field : Analysis.ASTField) -> String:
+		if field.field_type == Analysis.FIELD_TYPE.MESSAGE:
+			var type_name : String = class_table[field.type_class_id].parent_name + "." + class_table[field.type_class_id].name
+			return type_name.substr(1, type_name.length() - 1)
+		return generate_gdscript_simple_type(field)
+
 	func generate_gdscript_simple_type(field : Analysis.ASTField) -> String:
 		if field.field_type == Analysis.FIELD_TYPE.INT32:
 			return "int"
@@ -1730,7 +1736,15 @@ class Translator:
 		var text : String = ""
 		var f : Analysis.ASTField = field_table[field_index]
 		var field_name : String = "__" + f.name
-		var pbfield_text : String = field_name + " = PBField.new("
+		var pbfield_text : String
+		var default_var_name := field_name + "_default"
+		if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
+			var type_name := generate_gdscript_type(f)
+			if type_name:
+				text = tabulate("var %s: Array[%s] = []\n" % [default_var_name, type_name], nesting)
+			else:
+				text = tabulate("var %s: Array = []\n" % [default_var_name], nesting)
+		pbfield_text += field_name + " = PBField.new("
 		pbfield_text += "\"" + f.name + "\", "
 		pbfield_text += generate_field_type(f) + ", "
 		pbfield_text += generate_field_rule(f) + ", "
@@ -1740,7 +1754,7 @@ class Translator:
 		elif f.option == Analysis.FIELD_OPTION.NOT_PACKED:
 			pbfield_text += "false"
 		if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-			pbfield_text += ", []"
+			pbfield_text += ", " + default_var_name
 		else:
 			pbfield_text += ", " + default_dict_text() + "[" + generate_field_type(f) + "]"
 		pbfield_text += ")\n"
@@ -1798,7 +1812,7 @@ class Translator:
 			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
 			text += generate_has_oneof(field_index, nesting)
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-				text += tabulate("func get_" + f.name + "() -> Array:\n", nesting)
+				text += tabulate("func get_" + f.name + "() -> Array[" + the_class_name + "]:\n", nesting)
 			else:
 				text += tabulate("func get_" + f.name + "() -> " + the_class_name + ":\n", nesting)
 			nesting += 1
@@ -1914,7 +1928,8 @@ class Translator:
 				argument_type = " : " + gd_type
 			text += generate_has_oneof(field_index, nesting)
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-				text += tabulate("func get_" + f.name + "() -> Array:\n", nesting)
+				var array_type := "[" + gd_type + "]" if gd_type else ""
+				text += tabulate("func get_" + f.name + "() -> Array" + array_type + ":\n", nesting)
 			else:
 				text += tabulate("func get_" + f.name + "()" + return_type + ":\n", nesting)
 			nesting += 1
