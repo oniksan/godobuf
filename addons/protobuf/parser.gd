@@ -1725,11 +1725,11 @@ class Translator:
 		elif field.field_type == Analysis.FIELD_TYPE.BYTES:
 			return "PackedByteArray"
 		return ""
-	
+
 	func generate_field_constructor(field_index : int, nesting : int) -> String:
 		var text : String = ""
 		var f : Analysis.ASTField = field_table[field_index]
-		var field_name : String = "_" + f.name
+		var field_name : String = "__" + f.name
 		var pbfield_text : String = field_name + " = PBField.new("
 		pbfield_text += "\"" + f.name + "\", "
 		pbfield_text += generate_field_type(f) + ", "
@@ -1751,11 +1751,11 @@ class Translator:
 		text += tabulate("service.field = " + field_name + "\n", nesting)
 		if f.field_type == Analysis.FIELD_TYPE.MESSAGE:
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-				text += tabulate("service.func_ref = Callable(self, \"add" + field_name + "\")\n", nesting)
+				text += tabulate("service.func_ref = Callable(self, \"add_" + f.name + "\")\n", nesting)
 			else:
-				text += tabulate("service.func_ref = Callable(self, \"new" + field_name + "\")\n", nesting)
+				text += tabulate("service.func_ref = Callable(self, \"new_" + f.name + "\")\n", nesting)
 		elif f.field_type == Analysis.FIELD_TYPE.MAP:
-			text += tabulate("service.func_ref = Callable(self, \"add_empty" + field_name + "\")\n", nesting)
+			text += tabulate("service.func_ref = Callable(self, \"add_empty_" + f.name + "\")\n", nesting)
 		text += tabulate("data[" + field_name + ".tag] = service\n", nesting)
 		
 		return text
@@ -1770,7 +1770,7 @@ class Translator:
 						find = true
 						text += tabulate("data[" + field_table[i].tag + "].state = PB_SERVICE_STATE.FILLED\n", nesting)
 					else:
-						text += tabulate("_" + field_table[i].name + ".value = " + default_dict_text() + "[" + generate_field_type(field_table[i]) + "]\n", nesting)
+						text += tabulate("__" + field_table[i].name + ".value = " + default_dict_text() + "[" + generate_field_type(field_table[i]) + "]\n", nesting)
 						text += tabulate("data[" + field_table[i].tag + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			if find:
 				return text
@@ -1791,7 +1791,8 @@ class Translator:
 	func generate_field(field_index : int, nesting : int) -> String:
 		var text : String = ""
 		var f : Analysis.ASTField = field_table[field_index]
-		text += tabulate("var _" + f.name + ": PBField\n", nesting)
+		var varname : String = "__" + f.name
+		text += tabulate("var " + varname + ": PBField\n", nesting)
 		if f.field_type == Analysis.FIELD_TYPE.MESSAGE:
 			var the_class_name : String = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
 			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
@@ -1801,45 +1802,45 @@ class Translator:
 			else:
 				text += tabulate("func get_" + f.name + "() -> " + the_class_name + ":\n", nesting)
 			nesting += 1
-			text += tabulate("return _" + f.name + ".value\n", nesting)
+			text += tabulate("return " + varname + ".value\n", nesting)
 			nesting -= 1
 			text += tabulate("func clear_" + f.name + "() -> void:\n", nesting)
 			nesting += 1
 			text += tabulate("data[" + str(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-				text += tabulate("_" + f.name + ".value = []\n", nesting)
+				text += tabulate(varname + ".value = []\n", nesting)
 				nesting -= 1
 				text += tabulate("func add_" + f.name + "() -> " + the_class_name + ":\n", nesting)
 				nesting += 1
 				text += tabulate("var element = " + the_class_name + ".new()\n", nesting)
-				text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
+				text += tabulate(varname + ".value.append(element)\n", nesting)
 				text += tabulate("return element\n", nesting)
 			else:
-				text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]\n", nesting)
+				text += tabulate(varname + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]\n", nesting)
 				nesting -= 1
 				text += tabulate("func new_" + f.name + "() -> " + the_class_name + ":\n", nesting)
 				nesting += 1
 				text += generate_group_clear(field_index, nesting)
-				text += tabulate("_" + f.name + ".value = " + the_class_name + ".new()\n", nesting)
-				text += tabulate("return _" + f.name + ".value\n", nesting)
+				text += tabulate(varname + ".value = " + the_class_name + ".new()\n", nesting)
+				text += tabulate("return " + varname + ".value\n", nesting)
 		elif f.field_type == Analysis.FIELD_TYPE.MAP:
 			var the_parent_class_name : String = class_table[f.type_class_id].parent_name
 			the_parent_class_name = the_parent_class_name.substr(1, the_parent_class_name.length() - 1)
 			var the_class_name : String = the_parent_class_name + "." + class_table[f.type_class_id].name
-			
+
 			text += generate_has_oneof(field_index, nesting)
 			text += tabulate("func get_raw_" + f.name + "():\n", nesting)
 			nesting += 1
-			text += tabulate("return _" + f.name + ".value\n", nesting)
+			text += tabulate("return " + varname + ".value\n", nesting)
 			nesting -= 1
 			text += tabulate("func get_" + f.name + "():\n", nesting)
 			nesting += 1
-			text += tabulate("return PBPacker.construct_map(_" + f.name + ".value)\n", nesting)
+			text += tabulate("return PBPacker.construct_map(" + varname + ".value)\n", nesting)
 			nesting -= 1
 			text += tabulate("func clear_" + f.name + "():\n", nesting)
 			nesting += 1
 			text += tabulate("data[" + str(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
-			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]\n", nesting)
+			text += tabulate(varname + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]\n", nesting)
 			nesting -= 1
 			for i in range(field_table.size()):
 				if field_table[i].parent_class_id == f.type_class_id && field_table[i].name == "value":
@@ -1854,7 +1855,7 @@ class Translator:
 					nesting += 1
 					text += generate_group_clear(field_index, nesting)
 					text += tabulate("var element = " + the_class_name + ".new()\n", nesting)
-					text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
+					text += tabulate(varname + ".value.append(element)\n", nesting)
 					text += tabulate("return element\n", nesting)
 					nesting -= 1
 					if field_table[i].field_type == Analysis.FIELD_TYPE.MESSAGE:
@@ -1862,9 +1863,9 @@ class Translator:
 						nesting += 1
 						text += generate_group_clear(field_index, nesting)
 						text += tabulate("var idx = -1\n", nesting)
-						text += tabulate("for i in range(_" + f.name + ".value.size()):\n", nesting)
+						text += tabulate("for i in range(" + varname + ".value.size()):\n", nesting)
 						nesting += 1
-						text += tabulate("if _" + f.name + ".value[i].get_key() == a_key:\n", nesting)
+						text += tabulate("if " + varname + ".value[i].get_key() == a_key:\n", nesting)
 						nesting += 1
 						text += tabulate("idx = i\n", nesting)
 						text += tabulate("break\n", nesting)
@@ -1873,11 +1874,11 @@ class Translator:
 						text += tabulate("element.set_key(a_key)\n", nesting)
 						text += tabulate("if idx != -1:\n", nesting)
 						nesting += 1
-						text += tabulate("_" + f.name + ".value[idx] = element\n", nesting)
+						text += tabulate(varname + ".value[idx] = element\n", nesting)
 						nesting -= 1
 						text += tabulate("else:\n", nesting)
 						nesting += 1
-						text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
+						text += tabulate(varname + ".value.append(element)\n", nesting)
 						nesting -= 1
 						text += tabulate("return element.new_value()\n", nesting)
 					else:
@@ -1885,9 +1886,9 @@ class Translator:
 						nesting += 1
 						text += generate_group_clear(field_index, nesting)
 						text += tabulate("var idx = -1\n", nesting)
-						text += tabulate("for i in range(_" + f.name + ".value.size()):\n", nesting)
+						text += tabulate("for i in range(" + varname + ".value.size()):\n", nesting)
 						nesting += 1
-						text += tabulate("if _" + f.name + ".value[i].get_key() == a_key:\n", nesting)
+						text += tabulate("if " + varname + ".value[i].get_key() == a_key:\n", nesting)
 						nesting += 1
 						text += tabulate("idx = i\n", nesting)
 						text += tabulate("break\n", nesting)
@@ -1897,11 +1898,11 @@ class Translator:
 						text += tabulate("element.set_value(a_value)\n", nesting)
 						text += tabulate("if idx != -1:\n", nesting)
 						nesting += 1
-						text += tabulate("_" + f.name + ".value[idx] = element\n", nesting)
+						text += tabulate(varname + ".value[idx] = element\n", nesting)
 						nesting -= 1
 						text += tabulate("else:\n", nesting)
 						nesting += 1
-						text += tabulate("_" + f.name + ".value.append(element)\n", nesting)
+						text += tabulate(varname + ".value.append(element)\n", nesting)
 						nesting -= 1
 					break
 		else:
@@ -1917,26 +1918,26 @@ class Translator:
 			else:
 				text += tabulate("func get_" + f.name + "()" + return_type + ":\n", nesting)
 			nesting += 1
-			text += tabulate("return _" + f.name + ".value\n", nesting)
+			text += tabulate("return " + varname + ".value\n", nesting)
 			nesting -= 1
 			text += tabulate("func clear_" + f.name + "() -> void:\n", nesting)
 			nesting += 1
 			text += tabulate("data[" + str(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-				text += tabulate("_" + f.name + ".value = []\n", nesting)
+				text += tabulate(varname + ".value = []\n", nesting)
 				nesting -= 1
 				text += tabulate("func add_" + f.name + "(value" + argument_type + ") -> void:\n", nesting)
 				nesting += 1
-				text += tabulate("_" + f.name + ".value.append(value)\n", nesting)
+				text += tabulate(varname + ".value.append(value)\n", nesting)
 			else:
-				text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]\n", nesting)
+				text += tabulate(varname + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]\n", nesting)
 				nesting -= 1
 				text += tabulate("func set_" + f.name + "(value" + argument_type + ") -> void:\n", nesting)
 				nesting += 1
 				text += generate_group_clear(field_index, nesting)
-				text += tabulate("_" + f.name + ".value = value\n", nesting)
+				text += tabulate(varname + ".value = value\n", nesting)
 		return text
-	
+
 	func generate_class(class_index : int, nesting : int) -> String:
 		var text : String = ""
 		if class_table[class_index].type == Analysis.CLASS_TYPE.MESSAGE || class_table[class_index].type == Analysis.CLASS_TYPE.MAP:
