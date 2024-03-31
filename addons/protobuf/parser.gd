@@ -1931,6 +1931,15 @@ class Translator:
 				var array_type := "[" + gd_type + "]" if gd_type else ""
 				text += tabulate("func get_" + f.name + "() -> Array" + array_type + ":\n", nesting)
 			else:
+				if f.qualificator == Analysis.FIELD_QUALIFICATOR.OPTIONAL:
+					text += tabulate("func has_" + f.name + "() -> bool:\n", nesting)
+					nesting += 1
+					text += tabulate("if _" + f.name + ".value:\n", nesting)
+					nesting += 1
+					text += tabulate("return true\n", nesting)
+					nesting -= 1
+					text += tabulate("return false\n", nesting)
+					nesting -= 1
 				text += tabulate("func get_" + f.name + "()" + return_type + ":\n", nesting)
 			nesting += 1
 			text += tabulate("return " + varname + ".value\n", nesting)
