@@ -1310,8 +1310,8 @@ class Analysis:
 		class_table.append(ASTClass.new("map_type_" + field_name, CLASS_TYPE.MAP, settings.parent_index, settings.parent_name, "", settings.construction_index))
 		field_table.append(ASTField.new(tag, field_name, "map_type_" + field_name, settings.parent_index, qualifcator, option, settings.construction_index, false))
 		
-		field_table.append(ASTField.new(1, "key", key_type_name, class_table.size() - 1, FIELD_QUALIFICATOR.REQUIRED, option, settings.construction_index, true))
-		field_table.append(ASTField.new(2, "value", type_name, class_table.size() - 1, FIELD_QUALIFICATOR.REQUIRED, option, settings.construction_index, true))
+		field_table.append(ASTField.new(1, "key", key_type_name, class_table.size() - 1, FIELD_QUALIFICATOR.OPTIONAL, option, settings.construction_index, true))
+		field_table.append(ASTField.new(2, "value", type_name, class_table.size() - 1, FIELD_QUALIFICATOR.OPTIONAL, option, settings.construction_index, true))
 		
 		return result
 	
