@@ -1811,9 +1811,20 @@ class Translator:
 			var the_class_name : String = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
 			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
 			text += generate_has_oneof(field_index, nesting)
+			if f.qualificator != Analysis.FIELD_QUALIFICATOR.OPTIONAL:
+				text += generate_has_oneof(field_index, nesting)
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
 				text += tabulate("func get_" + f.name + "() -> Array[" + the_class_name + "]:\n", nesting)
 			else:
+				if f.qualificator == Analysis.FIELD_QUALIFICATOR.OPTIONAL:
+					text += tabulate("func has_" + f.name + "() -> bool:\n", nesting)
+					nesting += 1
+					text += tabulate("if " + varname + ".value != null:\n", nesting)
+					nesting += 1
+					text += tabulate("return true\n", nesting)
+					nesting -= 1
+					text += tabulate("return false\n", nesting)
+					nesting -= 1
 				text += tabulate("func get_" + f.name + "() -> " + the_class_name + ":\n", nesting)
 			nesting += 1
 			text += tabulate("return " + varname + ".value\n", nesting)
@@ -1931,6 +1942,15 @@ class Translator:
 				var array_type := "[" + gd_type + "]" if gd_type else ""
 				text += tabulate("func get_" + f.name + "() -> Array" + array_type + ":\n", nesting)
 			else:
+				if f.qualificator == Analysis.FIELD_QUALIFICATOR.OPTIONAL:
+					text += tabulate("func has_" + f.name + "() -> bool:\n", nesting)
+					nesting += 1
+					text += tabulate("if " + varname + ".value != null:\n", nesting)
+					nesting += 1
+					text += tabulate("return true\n", nesting)
+					nesting -= 1
+					text += tabulate("return false\n", nesting)
+					nesting -= 1
 				text += tabulate("func get_" + f.name + "()" + return_type + ":\n", nesting)
 			nesting += 1
 			text += tabulate("return " + varname + ".value\n", nesting)
