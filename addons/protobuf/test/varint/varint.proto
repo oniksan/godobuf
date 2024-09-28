@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+message Int64 {
+    int64 n = 1;
+}
+
+message Int32 {
+    int32 n = 1;
+}
+
+message Uint64 {
+    uint64 n = 1;
+}
+
+message Sint64 {
+    sint64 n = 1;
+}

@@ -31,7 +31,7 @@
 
 # DEBUG_TAB redefine this "  " if you need, example: const DEBUG_TAB = "\t"
 
-const PROTO_VERSION = 0
+const PROTO_VERSION = 3
 
 const DEBUG_TAB : String = "  "
 
@@ -182,6 +182,20 @@ class PBPacker:
 				value = 1
 			else:
 				value = 0
+
+		# Repeated fields should have explicit zero entries rather than no bytes
+		#if value == 0:
+		#	varint.append(0)
+		#	return varint
+		
+		# If the value is negative, bit shifting will not shift the sign bit.
+		# As per the protobuf standard, we should interpret all integers as unsigned
+		# but GDScript does not support that. So we need to manually move the sign
+		# bit in that case.
+		#if value < 0:
+
+
+		#while value != 0:
 		for _i in range(9):
 			var b = value & 0x7F
 			value >>= 7
@@ -192,6 +206,7 @@ class PBPacker:
 				break
 		if varint.size() == 9 && (varint[8] & 0x80 != 0):
 			varint.append(0x01)
+
 		return varint
 
 	static func pack_bytes(value, count : int, data_type : int) -> PackedByteArray:
@@ -655,3 +670,190 @@ class PBPacker:
 			elif data[i].field.rule == PB_RULE.REQUIRED:
 				result += data[i].field.name + ": " + "error"
 		return result
+
+
+
+############### USER DATA BEGIN ################
+
+
+class Int64:
+	func _init():
+		var service
+		
+		__n = PBField.new("n", PB_DATA_TYPE.INT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.INT64])
+		service = PBServiceField.new()
+		service.field = __n
+		data[__n.tag] = service
+		
+	var data = {}
+	
+	var __n: PBField
+	func has_n() -> bool:
+		if __n.value != null:
+			return true
+		return false
+	func get_n() -> int:
+		return __n.value
+	func clear_n() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__n.value = DEFAULT_VALUES_3[PB_DATA_TYPE.INT64]
+	func set_n(value : int) -> void:
+		__n.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
+class Int32:
+	func _init():
+		var service
+		
+		__n = PBField.new("n", PB_DATA_TYPE.INT32, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.INT32])
+		service = PBServiceField.new()
+		service.field = __n
+		data[__n.tag] = service
+		
+	var data = {}
+	
+	var __n: PBField
+	func has_n() -> bool:
+		if __n.value != null:
+			return true
+		return false
+	func get_n() -> int:
+		return __n.value
+	func clear_n() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__n.value = DEFAULT_VALUES_3[PB_DATA_TYPE.INT32]
+	func set_n(value : int) -> void:
+		__n.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
+class Uint64:
+	func _init():
+		var service
+		
+		__n = PBField.new("n", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __n
+		data[__n.tag] = service
+		
+	var data = {}
+	
+	var __n: PBField
+	func has_n() -> bool:
+		if __n.value != null:
+			return true
+		return false
+	func get_n() -> int:
+		return __n.value
+	func clear_n() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__n.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_n(value : int) -> void:
+		__n.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
+class Sint64:
+	func _init():
+		var service
+		
+		__n = PBField.new("n", PB_DATA_TYPE.SINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.SINT64])
+		service = PBServiceField.new()
+		service.field = __n
+		data[__n.tag] = service
+		
+	var data = {}
+	
+	var __n: PBField
+	func has_n() -> bool:
+		if __n.value != null:
+			return true
+		return false
+	func get_n() -> int:
+		return __n.value
+	func clear_n() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__n.value = DEFAULT_VALUES_3[PB_DATA_TYPE.SINT64]
+	func set_n(value : int) -> void:
+		__n.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
+################ USER DATA END #################
