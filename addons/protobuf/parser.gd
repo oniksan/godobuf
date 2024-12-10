@@ -2005,8 +2005,18 @@ class Translator:
 		elif class_table[class_index].type == Analysis.CLASS_TYPE.ENUM:
 			text += tabulate("enum " + class_table[class_index].name + " {\n", nesting)
 			nesting += 1
+
+			var expected_prefix = class_table[class_index].name.to_snake_case().to_upper() + "_"
+			var all_have_prefix = true
 			for en in range(class_table[class_index].values.size()):
-				var enum_val = class_table[class_index].values[en].name + " = " + class_table[class_index].values[en].value
+				var value_name = class_table[class_index].values[en].name
+				all_have_prefix = all_have_prefix and value_name.begins_with(expected_prefix) and value_name != expected_prefix
+
+			for en in range(class_table[class_index].values.size()):
+				var value_name = class_table[class_index].values[en].name
+				if all_have_prefix:
+					value_name = value_name.substr(expected_prefix.length())
+				var enum_val = value_name + " = " + class_table[class_index].values[en].value
 				if en == class_table[class_index].values.size() - 1:
 					text += tabulate(enum_val + "\n", nesting)
 				else:
