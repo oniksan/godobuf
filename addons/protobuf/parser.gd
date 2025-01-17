@@ -1535,6 +1535,8 @@ class Semantic:
 				if f.type_name[0] == ".":
 					f.type_class_id = find_full_class_name(f.type_name)
 				else:
+					# Reset result from previous assignment, that can be incorrect because of merging of imports
+					f.type_class_id = -1
 					var splited_name : Array = f.type_name.split(".", false)
 					var cur_class_index : int = f.parent_class_id
 					var exit : bool = false
