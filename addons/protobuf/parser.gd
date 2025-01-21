@@ -1810,7 +1810,6 @@ class Translator:
 		if f.field_type == Analysis.FIELD_TYPE.MESSAGE:
 			var the_class_name : String = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
 			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
-			text += generate_has_oneof(field_index, nesting)
 			if f.qualificator != Analysis.FIELD_QUALIFICATOR.OPTIONAL:
 				text += generate_has_oneof(field_index, nesting)
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
