@@ -1,13 +1,11 @@
-# Godobuf v0.6.0
+# Godobuf v0.6.1
 
-## Changelog in v0.6.0
+## Changelog in v0.6.1
+- Some bugs fixed
+
+## What's new in v0.6.0
 - Added support for Godot 4
 - Fixed bug with return type in add method for map
-
-## What's new in v0.5.0
-- Implemented unit tests
-- Fixed repeat field clearing bug
-- Fixed map bug with default values
 
 
 ## Version
