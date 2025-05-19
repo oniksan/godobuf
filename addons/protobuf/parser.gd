@@ -2087,6 +2087,8 @@ class Translator:
 		
 		var text : String = ""
 		var nesting : int = 0
+		var class_name_str = file_name.get_file().get_basename().to_pascal_case() + "Pb"
+		text += "class_name " + class_name_str + "\n\n"
 		core_text = core_text.replace(PROTO_VERSION_DEFAULT, PROTO_VERSION_CONST + str(proto_version))
 		text += core_text + "\n\n\n"
 		text += "############### USER DATA BEGIN ################\n"
