@@ -32,80 +32,145 @@
 
 extends VBoxContainer
 
+const IDENTIFIER_INVALID: String = "NO_VALID_IDENTIFIER"
+
 var Parser = preload("res://addons/protobuf/parser.gd")
 var Util = preload("res://addons/protobuf/protobuf_util.gd")
 
+@onready var select_folder: CheckButton = $SelectFolder
+
 var input_file_path = null
+var input_folder_path = null
 var output_file_path = null
+var output_folder_path = null
 
 func _ready():
 	pass
 
 func _on_InputFileButton_pressed():
-	
-	show_dialog($InputFileDialog)
-	$InputFileDialog.invalidate()
+	if select_folder.button_pressed:
+		show_dialog($InputFolderDialog)
+		$InputFolderDialog.invalidate()
+	else:
+		show_dialog($InputFileDialog)
+		$InputFileDialog.invalidate()
 
 func _on_OutputFileButton_pressed():
-	
-	show_dialog($OutputFileDialog)
-	$OutputFileDialog.invalidate()
+	if select_folder.button_pressed:
+		show_dialog($OutputFolderDialog)
+		$OutputFolderDialog.invalidate()
+	else:
+		show_dialog($OutputFileDialog)
+		$OutputFileDialog.invalidate()
 
 func _on_InputFileDialog_file_selected(path):
 	
 	input_file_path = path
 	$HBoxContainer/InputFileEdit.text = path
 
+func _on_input_folder_dialog_dir_selected(dir: String) -> void:
+	input_folder_path = dir
+	$HBoxContainer/InputFileEdit.text = dir
+
 func _on_OutputFileDialog_file_selected(path):
 	
 	output_file_path = path
 	$HBoxContainer2/OutputFileEdit.text = path
 
+func _on_output_folder_dialog_dir_selected(dir: String) -> void:
+	output_folder_path = dir
+	$HBoxContainer2/OutputFileEdit.text = dir
+
 func show_dialog(dialog):
 	
 	dialog.popup_centered()
 
-func _on_CompileButton_pressed():
-	
-	if input_file_path == null || output_file_path == null:
-		show_dialog($FilesErrorAcceptDialog)
-		return
-	
-	var file = FileAccess.open(input_file_path, FileAccess.READ)
-	if file == null:
-		print("File: '", input_file_path, "' not found.")
-		show_dialog($FailAcceptDialog)
-		return
-	
-	var message_prefix = ""
+func get_custom_message_prefix() -> String:
+	var prefix: String = ""
 	if $MessagePrefixCheckButton.is_pressed():
-		message_prefix = $HBoxContainer3/MessagePrefixEdit.text
+		prefix = $HBoxContainer3/MessagePrefixEdit.text
 
-		if !message_prefix.is_valid_identifier():
+		if !prefix.is_valid_identifier():
 			show_dialog($PrefixErrorAcceptDialog)
-			return
+			return IDENTIFIER_INVALID
+	return prefix
 
-	var should_prefix_enums = $EnumPrefixCheckButton.is_pressed()
-
+func get_custom_class_name() -> String:
 	var custom_class_name = ""
 	if $ClassNameCheckButton.is_pressed():
 		custom_class_name = $HBoxContainer4/ClassNameEdit.text
 
 		if !custom_class_name.is_valid_identifier():
 			show_dialog($ClassNameErrorAcceptDialog)
-			return
+			return IDENTIFIER_INVALID
+	return custom_class_name
 
-	var parser = Parser.new()
+func parse_file(parser: Parser, file: FileAccess, message_prefix: String, should_prefix_enums: bool, custom_class_name: String) -> bool: 
+	if file == null:
+		print("File: '", input_file_path, "' not found.")
+		show_dialog($FailAcceptDialog)
+		return false
 	
 	if parser.work(Util.extract_dir(input_file_path), Util.extract_filename(input_file_path), \
 		output_file_path, "res://addons/protobuf/protobuf_core.gd", message_prefix, should_prefix_enums, custom_class_name):
 		show_dialog($SuccessAcceptDialog)
 	else:
 		show_dialog($FailAcceptDialog)
+		return false
 	
+	return true
+
+func _on_CompileButton_pressed():
+	if input_file_path == null || output_file_path == null:
+		show_dialog($FilesErrorAcceptDialog)
+		return
+	
+	var message_prefix = get_custom_message_prefix()
+	if message_prefix == IDENTIFIER_INVALID: return
+
+	var should_prefix_enums = $EnumPrefixCheckButton.is_pressed()
+
+	var custom_class_name = get_custom_class_name()
+	if custom_class_name == IDENTIFIER_INVALID: return
+	
+	var parser = Parser.new()
+	var file = FileAccess.open(input_file_path, FileAccess.READ)
+	parse_file(parser, file, message_prefix, should_prefix_enums, custom_class_name)
 	file.close()
-	
 	return
+
+func _on_compile_all_button_pressed() -> void:
+	if input_folder_path == null || output_folder_path == null:
+		show_dialog($FilesErrorAcceptDialog)
+		return
+	
+	var dir: DirAccess = DirAccess.open(input_folder_path)
+	if dir == null:
+		show_dialog($FilesErrorAcceptDialog)
+		return
+	
+	var message_prefix = get_custom_message_prefix()
+	if message_prefix == IDENTIFIER_INVALID: return
+
+	var should_prefix_enums = $EnumPrefixCheckButton.is_pressed()
+
+	var custom_class_name = get_custom_class_name()
+	if custom_class_name == IDENTIFIER_INVALID: return
+	
+	dir.list_dir_begin()
+	for file_string: String in dir.get_files():
+		if file_string.split(".")[1] != "proto":
+			print("Not proto: {0} ({1})".format([file_string, file_string.split(".")[1] ]))
+			continue
+		input_file_path = "{0}/{1}".format([input_folder_path, file_string])
+		var output_file = "{0}.{1}".format([file_string.split(".")[0], "gd"])
+		output_file_path = "{0}/{1}".format([output_folder_path, output_file])
+		
+		
+		var parser = Parser.new()
+		var file: FileAccess = FileAccess.open(input_file_path, FileAccess.READ)
+		parse_file(parser, file, message_prefix, should_prefix_enums, custom_class_name)
+		file.close()
 
 func execute_unit_tests(source_name, script_name, compiled_script_name):
 	
