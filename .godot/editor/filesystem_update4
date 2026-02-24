@@ -1,6 +1,0 @@
-res://addons/protobuf/protobuf_util.gd
-res://addons/protobuf/protobuf_cmdln.gd
-res://addons/protobuf/protobuf_ui_dock.tscn
-res://addons/protobuf/protobuf_ui_dock.gd
-res://addons/protobuf/parser.gd
-res://test_input/test.txt
