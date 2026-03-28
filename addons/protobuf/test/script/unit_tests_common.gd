@@ -177,6 +177,12 @@ func object_equal(packed_object, restored_object):
 		var po_value = packed_object.data[data_key].field.value
 		var ro_value = restored_object.data[data_key].field.value
 		
+		if packed_object.has_method("get_" + packed_object.data[data_key].field.name + "_case"):
+			var po_case = packed_object.get_f_oneof_case()
+			var ro_case = restored_object.get_f_oneof_case()
+			if po_case != ro_case:
+				return false
+		
 		if po_value == null && ro_value == null:
 			return true
 		

@@ -1,7 +1,7 @@
 #
 # BSD 3-Clause License
 #
-# Copyright (c) 2018 - 2023, Oleg Malyavkin
+# Copyright (c) 2018 - 2026, Oleg Malyavkin
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,11 @@ extends Node
 
 const PROTO_VERSION_CONST : String = "const PROTO_VERSION = "
 const PROTO_VERSION_DEFAULT : String = PROTO_VERSION_CONST + "0"
+
+const ONE_OF_CASE_FUNCTION_SUFFIX : String = "_case"
+const ONE_OF_CASE_ENUM_FIELD_SUFFIX : String = "Case"
+const ONE_OF_CASE_INNER_FIELD_SUFFIX : String = "_case"
+const ONE_OF_CASE_DEFAULT_VALUE : int = 0
 
 class Document:
 	
@@ -1811,7 +1816,7 @@ class Translator:
 					if field_index == i:
 						find = true
 						text += tabulate("data[" + str(field_table[i].tag) + "].state = PB_SERVICE_STATE.FILLED\n", nesting)
-						text += tabulate("_" + g.name + "_case = " + str(field_table[i].tag) + "\n", nesting)
+						text += tabulate("_" + g.name + ONE_OF_CASE_INNER_FIELD_SUFFIX + " = " + str(field_table[i].tag) + "\n", nesting)
 					else:
 						text += tabulate("__" + field_table[i].name + ".value = " + default_dict_text() + "[" + generate_field_type(field_table[i]) + "]\n", nesting)
 						text += tabulate("data[" + field_table[i].tag + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
@@ -1823,9 +1828,9 @@ class Translator:
 		var text : String = ""
 		for g in group_table:
 			if g.parent_class_id == class_index:
-				text += tabulate("func get_" + g.name + "_case() -> int:\n", nesting)
+				text += tabulate("func get_" + g.name + ONE_OF_CASE_FUNCTION_SUFFIX + "() -> int:\n", nesting)
 				nesting += 1
-				text += tabulate("return _" + g.name + "_case\n", nesting)
+				text += tabulate("return _" + g.name + ONE_OF_CASE_INNER_FIELD_SUFFIX + "\n", nesting)
 				nesting -= 1
 		return text
 	
@@ -1833,7 +1838,7 @@ class Translator:
 		var text : String = ""
 		for g in group_table:
 			if g.parent_class_id == class_index:
-				var enum_name = g.name.to_pascal_case() + "Case"
+				var enum_name = g.name.to_pascal_case() + ONE_OF_CASE_ENUM_FIELD_SUFFIX
 				text += tabulate("enum " + enum_name + " {\n", nesting)
 				nesting += 1
 				text += tabulate(g.name.to_snake_case().to_upper() + "_NOT_SET = 0,\n", nesting)
@@ -1841,7 +1846,7 @@ class Translator:
 					text += tabulate(field_table[i].name.to_snake_case().to_upper() + " = " + str(field_table[i].tag) + ",\n", nesting)
 				nesting -= 1
 				text += tabulate("}\n", nesting)
-				text += tabulate("var _" + g.name + "_case: int = 0\n", nesting)
+				text += tabulate("var _" + g.name + ONE_OF_CASE_INNER_FIELD_SUFFIX + ": int = " + str(ONE_OF_CASE_DEFAULT_VALUE) + "\n", nesting)
 				text += "\n"
 		return text
 	
@@ -1933,6 +1938,12 @@ class Translator:
 			nesting += 1
 			text += tabulate("data[" + str(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			text += tabulate(varname + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]\n", nesting)
+			for g in group_table:
+				if g.parent_class_id == f.parent_class_id:
+					for i in g.field_indexes:
+						if field_index == i:
+							text += tabulate("_" + g.name + ONE_OF_CASE_INNER_FIELD_SUFFIX + " = " + str(ONE_OF_CASE_DEFAULT_VALUE) + "\n", nesting)
+							break
 			nesting -= 1
 			for i in range(field_table.size()):
 				if field_table[i].parent_class_id == f.type_class_id && field_table[i].name == "value":
@@ -1945,7 +1956,8 @@ class Translator:
 						value_return_type = " -> " + generate_gdscript_type(field_table[i], prefix_options)
 					text += tabulate("func add_empty_" + f.name + "()" + return_type + ":\n", nesting)
 					nesting += 1
-					text += generate_group_clear(field_index, nesting)
+					if oneof_field:
+						text += generate_group_clear(field_index, nesting)
 					text += tabulate("var element = " + the_class_name + ".new()\n", nesting)
 					text += tabulate(varname + ".value.append(element)\n", nesting)
 					text += tabulate("return element\n", nesting)
@@ -1953,7 +1965,8 @@ class Translator:
 					if field_table[i].field_type == Analysis.FIELD_TYPE.MESSAGE:
 						text += tabulate("func add_" + f.name + "(a_key)" + value_return_type + ":\n", nesting)
 						nesting += 1
-						text += generate_group_clear(field_index, nesting)
+						if oneof_field:
+							text += generate_group_clear(field_index, nesting)
 						text += tabulate("var idx = -1\n", nesting)
 						text += tabulate("for i in range(" + varname + ".value.size()):\n", nesting)
 						nesting += 1
@@ -1976,7 +1989,8 @@ class Translator:
 					else:
 						text += tabulate("func add_" + f.name + "(a_key, a_value) -> void:\n", nesting)
 						nesting += 1
-						text += generate_group_clear(field_index, nesting)
+						if oneof_field:
+							text += generate_group_clear(field_index, nesting)
 						text += tabulate("var idx = -1\n", nesting)
 						text += tabulate("for i in range(" + varname + ".value.size()):\n", nesting)
 						nesting += 1
@@ -2030,7 +2044,7 @@ class Translator:
 				if g.parent_class_id == f.parent_class_id:
 					for i in g.field_indexes:
 						if field_index == i:
-							text += tabulate("_" + g.name + "_case = 0\n", nesting)
+							text += tabulate("_" + g.name + ONE_OF_CASE_INNER_FIELD_SUFFIX + " = " + str(ONE_OF_CASE_DEFAULT_VALUE) + "\n", nesting)
 							break
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
 				text += tabulate(varname + ".value.clear()\n", nesting)

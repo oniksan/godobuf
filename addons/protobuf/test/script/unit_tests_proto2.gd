@@ -1,7 +1,7 @@
 #
 # BSD 3-Clause License
 #
-# Copyright (c) 2018 - 2022, Kittenseater, Oleg Malyavkin
+# Copyright (c) 2018 - 2026, Kittenseater, Oleg Malyavkin
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -134,7 +134,11 @@ func exec_all(save_to_file) -> bool:
 		["test4",			P.Test4],
 		["test4_map",		P.Test4, 1, 2, 3, 4, 5],
 		["test4_map_dup",	P.Test4],
-		["test4_map_zero_key",	P.Test4]
+		["test4_map_zero_key",	P.Test4],
+		["test_oneof_case_f1", P.Test1],
+		["test_oneof_case_f2", P.Test1],
+		["test_oneof_case_switch", P.Test1],
+		["test_oneof_case_clear", P.Test1],
 	])
 
 
@@ -743,4 +747,39 @@ func test4_map_dup(t): # 1, 10}, {2, 20}, {1, 20}, {2, 200
 	
 func test4_map_zero_key(t):
 	t.add_f5(0, 1)
+	return t.to_bytes()
+
+func test_oneof_case_f1(t):
+	t.set_f_oneof_f1("test")
+	var case_val = t.get_f_oneof_case()
+	assert(case_val == 17, "Expected 17 for f_oneof_f1, got " + str(case_val))
+	return t.to_bytes()
+
+func test_oneof_case_f2(t):
+	t.set_f_oneof_f2(123)
+	var case_val = t.get_f_oneof_case()
+	assert(case_val == 18, "Expected 18 for f_oneof_f2, got " + str(case_val))
+	return t.to_bytes()
+
+func test_oneof_case_switch(t):
+	t.set_f_oneof_f1("first")
+	match t.get_f_oneof_case():
+		t.FOneofCase.F_ONEOF_F_1:
+			pass
+		_:
+			assert(false, "Wrong case")
+	
+	t.set_f_oneof_f2(999)
+	match t.get_f_oneof_case():
+		t.FOneofCase.F_ONEOF_F_2:
+			pass
+		_:
+			assert(false, "Wrong case")
+	return t.to_bytes()
+
+func test_oneof_case_clear(t):
+	t.set_f_oneof_f1("test")
+	assert(t.get_f_oneof_case() == 17, "Case should be 17")
+	t.clear_f_oneof_f1()
+	assert(t.get_f_oneof_case() == 0, "Case should be 0 after clear")
 	return t.to_bytes()
