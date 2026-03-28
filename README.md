@@ -331,12 +331,32 @@ if my_field_f1 == MyProto.TestEnum.VALUE_1:
 Use similarly to scalar types, but you can set the value for only one field grouped in oneof.<br/>
 Oneof group name not used in GDScript.<br/>
 If you set one field of oneof group another fields will be cleared automatically.
+For each oneof group, the generator creates:
+- Standard getter/setter methods for each field
+- `has_<field_name>()` methods to check if a specific field is set
+- `get_<oneof_name>_case()` method that returns which field is currently set
+- `[OneOfName]Case` enum for use with `match` statements
 #### Set value
 Use method `set_<field_name>(value)`. Sets field value.
 #### Get value
 Use method `get_<field_name>()`. Returns field value.
 #### Has value
 Use method `has_<field_name>()`. Returns true if the value has been set in `byte_sequence`.
+#### Get case
+Use method `get_<oneof_name>_case()`. Returns the tag number of the currently set field, or 0 if no field is set.
+#### Generated enum
+The enum is named `<OneOfName>Case` (pascal case) and contains:
+- `<ONEOF_NAME>_NOT_SET = 0` when no field is set
+- `<FIELD_NAME> = <tag_number>` for each field in the oneof
+For a oneof named my_oneof with fields f1 (tag 1), f2 (tag 2), the generated enum is:
+> GDScript. Enum naming rules
+```gdscript
+enum MyOneofCase {
+    MY_ONEOF_NOT_SET = 0,
+    F_1 = 1,
+    F_2 = 2
+}
+```
 #### Example
 > .proto-file
 ```protobuf
@@ -373,7 +393,21 @@ if a.has_f1():
 elif a.has_f2():
 	print("F2")
 ```
+> GDScript. Using match
+```gdscript
+var a = MyProto.A.new()
+a.set_f1("my string")
 
+match a.get_my_oneof_case():
+	a.MyOneofCase.F_1:
+		print("Text is set: ", a.get_f1())
+	a.MyOneofCase.F_2:
+		print("Number is set: ", a.get_f2())
+	a.MyOneofCase.F_3:
+		print("Map is set: ", a.get_f3())
+	a.MyOneofCase.MY_ONEOF_NOT_SET:
+		print("No payload field set")
+```
 ### 6. Map
 #### Add value
 For non-message map values, use method:<br/>
