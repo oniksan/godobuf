@@ -37,7 +37,7 @@ var dock
 func _enter_tree():
 	# Initialization of the plugin goes here
 	# First load the dock scene and instance it:
-	dock = preload("res://addons/protobuf/protobuf_ui_dock.tscn").instantiate()
+	dock = preload("res://addons/godobuf/godobuf_ui_dock.tscn").instantiate()
 
 	# Add the loaded scene to the docks:
 	add_control_to_dock(DOCK_SLOT_LEFT_BR, dock)

@@ -31,8 +31,8 @@
 
 extends SceneTree
 
-var Parser = preload("res://addons/protobuf/parser.gd")
-var Util = preload("res://addons/protobuf/protobuf_util.gd")
+var Parser = preload("res://addons/godobuf/parser.gd")
+var Util = preload("res://addons/godobuf/godobuf_util.gd")
 
 func error(msg : String):
 	push_error(msg)
@@ -85,7 +85,7 @@ func _init():
 	var parser = Parser.new()
 
 	if parser.work(Util.extract_dir(input_file_name), Util.extract_filename(input_file_name), \
-		output_file_name, "res://addons/protobuf/protobuf_core.gd", \
+		output_file_name, "res://addons/godobuf/godobuf_core.gd", \
 		message_prefix, should_prefix_enums, custom_class_name):
 
 		print("Compiled '", input_file_name, "' to '", output_file_name, "'.")

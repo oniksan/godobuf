@@ -14,12 +14,12 @@ _global_script_class_icons={
 
 [application]
 
-config/name="Protobuf Plugin"
+config/name="Godobuf Plugin"
 config/icon="res://logo.png"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/protobuf/plugin.cfg")
+enabled=PackedStringArray("res://addons/godobuf/plugin.cfg")
 
 [rendering]
 

@@ -1,6 +1,6 @@
 extends Node
 
-var Parser = preload("res://addons/protobuf/parser.gd")
+var Parser = preload("res://addons/godobuf/parser.gd")
 
 func _assert(condition: bool, message: String) -> bool:
 	if !condition:
@@ -8,11 +8,11 @@ func _assert(condition: bool, message: String) -> bool:
 	return condition
 
 func exec_all() -> bool:
-	var source_dir = "res://addons/protobuf/test/source/batch"
-	var output_dir = "res://addons/protobuf/test/temp/batch"
+	var source_dir = "res://addons/godobuf/test/source/batch"
+	var output_dir = "res://addons/godobuf/test/temp/batch"
 	var parser = Parser.new()
 
-	if !parser.work_directory(source_dir, output_dir, "res://addons/protobuf/protobuf_core.gd"):
+	if !parser.work_directory(source_dir, output_dir, "res://addons/godobuf/godobuf_core.gd"):
 		printerr("Batch compilation failed.")
 		return false
 
