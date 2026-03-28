@@ -1810,13 +1810,40 @@ class Translator:
 				for i in g.field_indexes:
 					if field_index == i:
 						find = true
-						text += tabulate("data[" + field_table[i].tag + "].state = PB_SERVICE_STATE.FILLED\n", nesting)
+						text += tabulate("data[" + str(field_table[i].tag) + "].state = PB_SERVICE_STATE.FILLED\n", nesting)
+						text += tabulate("_" + g.name + "_case = " + str(field_table[i].tag) + "\n", nesting)
 					else:
 						text += tabulate("__" + field_table[i].name + ".value = " + default_dict_text() + "[" + generate_field_type(field_table[i]) + "]\n", nesting)
 						text += tabulate("data[" + field_table[i].tag + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			if find:
 				return text
 		return ""
+	
+	func generate_group_getters(class_index : int, nesting : int) -> String:
+		var text : String = ""
+		for g in group_table:
+			if g.parent_class_id == class_index:
+				text += tabulate("func get_" + g.name + "_case() -> int:\n", nesting)
+				nesting += 1
+				text += tabulate("return _" + g.name + "_case\n", nesting)
+				nesting -= 1
+		return text
+	
+	func generate_group_definitions(class_index : int, nesting : int) -> String:
+		var text : String = ""
+		for g in group_table:
+			if g.parent_class_id == class_index:
+				var enum_name = g.name.to_pascal_case() + "Case"
+				text += tabulate("enum " + enum_name + " {\n", nesting)
+				nesting += 1
+				text += tabulate(g.name.to_snake_case().to_upper() + "_NOT_SET = 0,\n", nesting)
+				for i in g.field_indexes:
+					text += tabulate(field_table[i].name.to_snake_case().to_upper() + " = " + str(field_table[i].tag) + ",\n", nesting)
+				nesting -= 1
+				text += tabulate("}\n", nesting)
+				text += tabulate("var _" + g.name + "_case: int = 0\n", nesting)
+				text += "\n"
+		return text
 	
 	func generate_has_oneof(field_index : int, nesting : int) -> String:
 		for g in group_table:
@@ -1826,7 +1853,7 @@ class Translator:
 					if field_index == i:
 						text += tabulate("func has_" + field_table[i].name + "() -> bool:\n", nesting)
 						nesting += 1
-						text += tabulate("return data[" + field_table[i].tag + "].state == PB_SERVICE_STATE.FILLED\n", nesting)
+						text += tabulate("return data[" + str(field_table[i].tag) + "].state == PB_SERVICE_STATE.FILLED\n", nesting)
 						return text
 		return ""
 
@@ -1999,6 +2026,12 @@ class Translator:
 			text += tabulate("func clear_" + f.name + "() -> void:\n", nesting)
 			nesting += 1
 			text += tabulate("data[" + str(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
+			for g in group_table:
+				if g.parent_class_id == f.parent_class_id:
+					for i in g.field_indexes:
+						if field_index == i:
+							text += tabulate("_" + g.name + "_case = 0\n", nesting)
+							break
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
 				text += tabulate(varname + ".value.clear()\n", nesting)
 				nesting -= 1
@@ -2038,7 +2071,9 @@ class Translator:
 			nesting -= 1
 			text += tabulate("var data = {}\n", nesting)
 			text += tabulate("\n", nesting)
+			text += generate_group_definitions(class_index, nesting)
 			text += field_text
+			text += generate_group_getters(class_index, nesting)
 			for j in range(class_table.size()):
 				if class_table[j].parent_index == class_index:
 					var cl_text = generate_class(j, nesting, prefix_options)
