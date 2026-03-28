@@ -1,8 +1,13 @@
 # Godobuf v0.7.0
+> Please note that the plugin directory name has changed from `protobuf` to `godobuf` to match the plugin name
+
 
 ## Changelog in v0.7.0
 - Godot 4.6 compatibility
 - Added support for directory input
+- Added support for oneof type case matchers
+- Fixed manual
+- Renamed plugin directory
 
 ## Changelog in v0.6.1
 - Some bugs fixed
@@ -46,11 +51,11 @@ Godobuf is easy to use and does not require rebuilding the Godot engine because 
 ## Installation
 
 1. Create a new project in Godot or use an existing project.
-2. Copy `addons` directory from the Godobuf repository to your Godot project directory.
+2. Copy the `godobuf` directory from the `addons` directory of the Godobuf repository into the `addons` directory of your Godot project.
 3. In the menu, choose `Project->Project Settings`.<br/>
 ![Project->Project Settings](/readme-images/1.png)<br/>
 4. In `Project Settings` window choose `Plugins` tab.
-5. Find Godobuf plugin and set status `Active`.<br/>
+5. Find the Godobuf plugin and set the `Enabled` checkbox.<br/>
 ![Plugins](/readme-images/2.png)<br/>
 6. Close `Project Settings` window.
 7. The Godobuf panel will be displayed in the Godot editor.<br/>
@@ -67,23 +72,22 @@ Godobuf is easy to use and does not require rebuilding the Godot engine because 
 3. Open the file dialog window `Output GDScript file`.
 4. Choose a directory and enter an output file name.<br/>
 ![Output GDScript file](/readme-images/5.png)<br/>
-5. Press `Compile` button.
+5. Press `Compile single file` button.
 6. See Godot `Output` for details.
 7. All possible error details are displayed in Godot `Output`.
 8. After completion, you'll see an alert window that reports the compilation result.<br/>
 ![Alert](/readme-images/6.png)<br/>
 9. If compilation was successful a new GDScript will be created in a specified directory.
 10. Use the script in your project.
-
-### From the User Interface (Directory conversion)
-1. In the `Directory conversion` section, open `Input proto directory` and select a directory with `.proto` files.
-2. Open `Output directory` and select where generated `.gd` files should be written.
-3. Press `Compile directory`.
-4. Godobuf compiles all `.proto` files recursively and preserves the relative folder structure in the output directory.
+11. You can also use the ability to compile multiple files in a directory at once, to do this, use the `Compile directory` block in a similar manner.
+- In the `Directory conversion` section, open `Input proto directory` and select a directory with `.proto` files.
+- Open `Output directory` and select where generated `.gd` files should be written.
+- Press `Compile directory`.
+- Godobuf compiles all `.proto` files recursively and preserves the relative folder structure in the output directory.
 
 ### From the Command Line
-1. From the root directory of your project, run `godot4 --headless -s addons/protobuf/protobuf_cmdln.gd --input=A.proto --output=my_proto.gd`
-2. Optionally, define an alias: `alias godobuf='godot4 -s addons/protobuf/protobuf_cmdln.gd'`
+1. From the root directory of your project, run `godot4 --headless -s addons/godobuf/godobuf_cmdln.gd --input=A.proto --output=my_proto.gd`
+2. Optionally, define an alias: `alias godobuf='godot4 -s addons/godobuf/godobuf_cmdln.gd'`
 
 ### Unit tests
 0. This option is mainly for those who modify the code or want to check the stability of this version.

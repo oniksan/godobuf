@@ -32,8 +32,8 @@
 
 extends VBoxContainer
 
-var Parser = preload("res://addons/protobuf/parser.gd")
-var Util = preload("res://addons/protobuf/protobuf_util.gd")
+var Parser = preload("res://addons/godobuf/parser.gd")
+var Util = preload("res://addons/godobuf/godobuf_util.gd")
 
 var input_file_path: String = ""
 var output_file_path: String = ""
@@ -115,7 +115,7 @@ func _on_CompileButton_pressed():
 	var parser = Parser.new()
 	
 	if parser.work(Util.extract_dir(input_file_path), Util.extract_filename(input_file_path), \
-		output_file_path, "res://addons/protobuf/protobuf_core.gd", message_prefix, should_prefix_enums, custom_class_name):
+		output_file_path, "res://addons/godobuf/godobuf_core.gd", message_prefix, should_prefix_enums, custom_class_name):
 		show_dialog($SuccessAcceptDialog)
 	else:
 		show_dialog($FailAcceptDialog)
@@ -151,7 +151,7 @@ func _on_CompileDirectoryButton_pressed():
 	if parser.work_directory(
 		input_dir_path,
 		output_dir_path,
-		"res://addons/protobuf/protobuf_core.gd",
+		"res://addons/godobuf/godobuf_core.gd",
 		message_prefix,
 		should_prefix_enums,
 		custom_class_name
@@ -162,7 +162,7 @@ func _on_CompileDirectoryButton_pressed():
 
 func execute_unit_tests(source_name, script_name, compiled_script_name):
 	
-	var test_path = "res://addons/protobuf/test/"
+	var test_path = "res://addons/godobuf/test/"
 	var test_input_file_path = test_path + "source/" + source_name
 	var test_output_dir_path = test_path + "temp"
 	var test_output_file_path = test_output_dir_path + "/" + compiled_script_name
@@ -181,7 +181,7 @@ func execute_unit_tests(source_name, script_name, compiled_script_name):
 	
 	var parser = Parser.new()
 	
-	if parser.work("", test_input_file_path, test_output_file_path, "res://addons/protobuf/protobuf_core.gd"):
+	if parser.work("", test_input_file_path, test_output_file_path, "res://addons/godobuf/godobuf_core.gd"):
 		var test_script = load(test_path + "script/" + script_name).new(test_path, test_output_file_path)
 		if test_script.exec_all(false):
 			show_dialog($SuccessTestDialog)
@@ -195,7 +195,7 @@ func execute_unit_tests(source_name, script_name, compiled_script_name):
 	return
 
 func execute_batch_conversion_tests():
-	var test_script = load("res://addons/protobuf/test/script/unit_tests_batch_compile.gd").new()
+	var test_script = load("res://addons/godobuf/test/script/unit_tests_batch_compile.gd").new()
 	if test_script.exec_all():
 		show_dialog($SuccessTestDialog)
 	else:
