@@ -156,7 +156,7 @@ func exec(test, save_to_file, test_names) -> bool:
 		else:
 			print("[unpack protobuf] FAIL: no protobuf binary")
 		print("")
-	print("===================== TESTS v" + protobuf_version + " COMLETED ======================")
+	print("===================== TESTS v" + protobuf_version + " COMPLETED =====================")
 	print("godobuf & protobuf compare success done " + str(success_pack_counter) + " of " + str(tests_counter))
 	print("godobuf unpack success done " + str(godot_success_unpack_counter) + " of " + str(tests_counter))
 	print("protobuf unpack success done " + str(protobuf_success_unpack_counter) + " of " + str(tests_counter))

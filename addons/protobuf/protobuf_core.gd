@@ -215,11 +215,19 @@ class PBPacker:
 			return bytes.decode_float(index)
 		elif data_type == PB_DATA_TYPE.DOUBLE:
 			return bytes.decode_double(index)
+		elif data_type == PB_DATA_TYPE.FIXED32:
+			return bytes.decode_u32(index)
+		elif data_type == PB_DATA_TYPE.SFIXED32:
+			return bytes.decode_s32(index)
+		elif data_type == PB_DATA_TYPE.FIXED64:
+			return bytes.decode_u64(index)
+		elif data_type == PB_DATA_TYPE.SFIXED64:
+			return bytes.decode_s64(index)
 		else:
-			# Convert to big endian
-			var slice: PackedByteArray = bytes.slice(index, index + count)
-			slice.reverse()
-			return slice
+			var value : int = 0
+			for i in range(count):
+				value |= bytes[index + i] << (8 * i)
+			return value
 
 	static func unpack_varint(varint_bytes) -> int:
 		var value : int = 0
@@ -234,7 +242,7 @@ class PBPacker:
 
 	static func isolate_varint(bytes : PackedByteArray, index : int) -> PackedByteArray:
 		var i: int = index
-		while i <= index + 10: # Protobuf varint max size is 10 bytes
+		while i <= index + 10 && i < bytes.size(): # Protobuf varint max size is 10 bytes
 			if !(bytes[i] & 0x80):
 				return bytes.slice(index, i + 1)
 			i += 1

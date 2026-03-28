@@ -35,21 +35,22 @@ extends VBoxContainer
 var Parser = preload("res://addons/protobuf/parser.gd")
 var Util = preload("res://addons/protobuf/protobuf_util.gd")
 
-var input_file_path = null
-var output_file_path = null
+var input_file_path: String = ""
+var output_file_path: String = ""
+var input_dir_path: String = ""
+var output_dir_path: String = ""
 
 func _ready():
-	pass
+	$InputDirDialog.file_mode = FileDialog.FILE_MODE_OPEN_DIR
+	$OutputDirDialog.file_mode = FileDialog.FILE_MODE_OPEN_DIR
 
 func _on_InputFileButton_pressed():
 	
 	show_dialog($InputFileDialog)
-	$InputFileDialog.invalidate()
 
 func _on_OutputFileButton_pressed():
 	
 	show_dialog($OutputFileDialog)
-	$OutputFileDialog.invalidate()
 
 func _on_InputFileDialog_file_selected(path):
 	
@@ -61,13 +62,29 @@ func _on_OutputFileDialog_file_selected(path):
 	output_file_path = path
 	$HBoxContainer2/OutputFileEdit.text = path
 
+func _on_InputDirButton_pressed():
+	show_dialog($InputDirDialog)
+
+func _on_OutputDirButton_pressed():
+	show_dialog($OutputDirDialog)
+
+func _on_InputDirDialog_dir_selected(path):
+	input_dir_path = path
+	$HBoxContainer5/InputDirEdit.text = path
+
+func _on_OutputDirDialog_dir_selected(path):
+	output_dir_path = path
+	$HBoxContainer6/OutputDirEdit.text = path
+
 func show_dialog(dialog):
 	
+	if dialog.has_method("invalidate"):
+		dialog.invalidate()
 	dialog.popup_centered()
 
 func _on_CompileButton_pressed():
 	
-	if input_file_path == null || output_file_path == null:
+	if input_file_path.is_empty() || output_file_path.is_empty():
 		show_dialog($FilesErrorAcceptDialog)
 		return
 	
@@ -92,7 +109,7 @@ func _on_CompileButton_pressed():
 		custom_class_name = $HBoxContainer4/ClassNameEdit.text
 
 		if !custom_class_name.is_valid_identifier():
-			show_dialog($ClassNameErrorAcceptDialog)
+			show_dialog($ClassNameAcceptDialog)
 			return
 
 	var parser = Parser.new()
@@ -107,6 +124,42 @@ func _on_CompileButton_pressed():
 	
 	return
 
+func _on_CompileDirectoryButton_pressed():
+	if input_dir_path.is_empty() || output_dir_path.is_empty():
+		show_dialog($DirsErrorAcceptDialog)
+		return
+
+	var message_prefix = ""
+	if $MessagePrefixCheckButton.is_pressed():
+		message_prefix = $HBoxContainer3/MessagePrefixEdit.text
+
+		if !message_prefix.is_valid_identifier():
+			show_dialog($PrefixErrorAcceptDialog)
+			return
+
+	var should_prefix_enums = $EnumPrefixCheckButton.is_pressed()
+
+	var custom_class_name = ""
+	if $ClassNameCheckButton.is_pressed():
+		custom_class_name = $HBoxContainer4/ClassNameEdit.text
+
+		if !custom_class_name.is_valid_identifier():
+			show_dialog($ClassNameAcceptDialog)
+			return
+
+	var parser = Parser.new()
+	if parser.work_directory(
+		input_dir_path,
+		output_dir_path,
+		"res://addons/protobuf/protobuf_core.gd",
+		message_prefix,
+		should_prefix_enums,
+		custom_class_name
+	):
+		show_dialog($SuccessAcceptDialog)
+	else:
+		show_dialog($FailAcceptDialog)
+
 func execute_unit_tests(source_name, script_name, compiled_script_name):
 	
 	var test_path = "res://addons/protobuf/test/"
@@ -114,8 +167,8 @@ func execute_unit_tests(source_name, script_name, compiled_script_name):
 	var test_output_dir_path = test_path + "temp"
 	var test_output_file_path = test_output_dir_path + "/" + compiled_script_name
 	
-	var output_dir = DirAccess.make_dir_absolute(test_output_dir_path)
-	if output_dir == null:
+	var output_dir_result = DirAccess.make_dir_recursive_absolute(test_output_dir_path)
+	if output_dir_result != OK and output_dir_result != ERR_ALREADY_EXISTS:
 		print("Cannot create output directory: '", test_output_dir_path, "'.")
 		show_dialog($FailAcceptDialog)
 		return
@@ -141,6 +194,13 @@ func execute_unit_tests(source_name, script_name, compiled_script_name):
 	
 	return
 
+func execute_batch_conversion_tests():
+	var test_script = load("res://addons/protobuf/test/script/unit_tests_batch_compile.gd").new()
+	if test_script.exec_all():
+		show_dialog($SuccessTestDialog)
+	else:
+		show_dialog($FailTestDialog)
+
 func _on_TestButton2_pressed() :
 	
 	execute_unit_tests("pbtest2.proto", "unit_tests_proto2.gd", "proto2.gd")
@@ -148,3 +208,6 @@ func _on_TestButton2_pressed() :
 func _on_TestButton3_pressed() :
 	
 	execute_unit_tests("pbtest3.proto", "unit_tests_proto3.gd", "proto3.gd")
+
+func _on_TestBatchButton_pressed() :
+	execute_batch_conversion_tests()

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package loremnet;
+
+import "net/common.proto";
+
+message C2S_Lorem {
+  uint32 schema_rev = 1;
+}
+
+message S2C_Ipsum {
+  uint64 token_id = 1;
+  uint32 cadence = 2;
+}
+
+message S2C_Amet {
+  AmetCause cause = 1;
+  optional string note = 2;
+}

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package loremnet;
+
+import "net/auth.proto";
+
+message Capsule {
+  oneof payload {
+    C2S_Lorem lorem = 1;
+    S2C_Ipsum ipsum = 2;
+    S2C_Amet amet = 3;
+  }
+}

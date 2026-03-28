@@ -1190,9 +1190,21 @@ class Analysis:
 			if indexed_tokens[offset].token.text == "public":
 				public = true
 			offset += 1
-		var f_name : String = path_dir + get_text_from_token(indexed_tokens[offset].token)
-		var sha : String = FileAccess.get_sha256(f_name)
-		if FileAccess.file_exists(f_name):
+		var import_name : String = get_text_from_token(indexed_tokens[offset].token)
+		var candidate_paths : Array = [path_dir + import_name]
+		if import_name.contains("/"):
+			var slash_pos = import_name.find("/")
+			if slash_pos >= 0 and slash_pos + 1 < import_name.length():
+				candidate_paths.append(path_dir + import_name.substr(slash_pos + 1))
+
+		var f_name : String = ""
+		for candidate in candidate_paths:
+			if FileAccess.file_exists(candidate):
+				f_name = candidate
+				break
+
+		if f_name != "":
+			var sha : String = FileAccess.get_sha256(f_name)
 			for i in import_table:
 				if i.path == f_name:
 					result.success = false
@@ -1208,16 +1220,14 @@ class Analysis:
 		else:
 			result.success = false
 			result.error = indexed_tokens[offset].index
-			result.description = "Import file '" + f_name + "' not found."
+			result.description = "Import file '" + import_name + "' not found."
 		return result
 		
 	func desc_package(indexed_tokens : Array, settings : CompareSettings) -> DescriptionResult:
-		printerr("UNRELEASED desc_package: ", indexed_tokens.size(), ", nesting: ", settings.nesting)
 		var result : DescriptionResult = DescriptionResult.new()
 		return result
 		
 	func desc_option(indexed_tokens : Array, settings : CompareSettings) -> DescriptionResult:
-		printerr("UNRELEASED desc_option: ", indexed_tokens.size(), ", nesting: ", settings.nesting)
 		var result : DescriptionResult = DescriptionResult.new()
 		return result
 	
@@ -1232,10 +1242,12 @@ class Analysis:
 			if indexed_tokens[offset].token.id == TOKEN_ID.FIELD_QUALIFICATION:
 				if indexed_tokens[offset].token.text == "repeated":
 					qualifcator = FIELD_QUALIFICATOR.REPEATED
-				elif indexed_tokens[offset].token.text == "required" || indexed_tokens[offset].token.text == "optional":
+				elif indexed_tokens[offset].token.text == "optional":
+					qualifcator = FIELD_QUALIFICATOR.OPTIONAL
+				elif indexed_tokens[offset].token.text == "required":
 					result.success = false
 					result.error = indexed_tokens[offset].index
-					result.description = "Using the 'required' or 'optional' qualificator is unacceptable in Protobuf v3."
+					result.description = "Using the 'required' qualificator is unacceptable in Protobuf v3."
 					return result
 				offset += 1
 		if proto_version == 2:
@@ -1817,22 +1829,31 @@ class Translator:
 						text += tabulate("return data[" + field_table[i].tag + "].state == PB_SERVICE_STATE.FILLED\n", nesting)
 						return text
 		return ""
+
+	func is_oneof_field(field_index : int) -> bool:
+		for g in group_table:
+			if g.parent_class_id == field_table[field_index].parent_class_id:
+				for i in g.field_indexes:
+					if field_index == i:
+						return true
+		return false
 	
 	func generate_field(field_index : int, nesting : int, prefix_options : PrefixOptions) -> String:
 		var text : String = ""
 		var f : Analysis.ASTField = field_table[field_index]
 		var varname : String = "__" + f.name
+		var oneof_field : bool = is_oneof_field(field_index)
 		text += tabulate("var " + varname + ": PBField\n", nesting)
 		if f.field_type == Analysis.FIELD_TYPE.MESSAGE:
 			var the_class_name : String = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
 			the_class_name = the_class_name.replace(".", "." + prefix_options.prefix)
 			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
-			if f.qualificator != Analysis.FIELD_QUALIFICATOR.OPTIONAL:
+			if oneof_field:
 				text += generate_has_oneof(field_index, nesting)
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
 				text += tabulate("func get_" + f.name + "() -> Array[" + the_class_name + "]:\n", nesting)
 			else:
-				if f.qualificator == Analysis.FIELD_QUALIFICATOR.OPTIONAL:
+				if f.qualificator == Analysis.FIELD_QUALIFICATOR.OPTIONAL && !oneof_field:
 					text += tabulate("func has_" + f.name + "() -> bool:\n", nesting)
 					nesting += 1
 					text += tabulate("if " + varname + ".value != null:\n", nesting)
@@ -1871,7 +1892,8 @@ class Translator:
 
 			var the_class_name : String = the_parent_class_name + "." + class_table[f.type_class_id].name
 
-			text += generate_has_oneof(field_index, nesting)
+			if oneof_field:
+				text += generate_has_oneof(field_index, nesting)
 			text += tabulate("func get_raw_" + f.name + "():\n", nesting)
 			nesting += 1
 			text += tabulate("return " + varname + ".value\n", nesting)
@@ -1955,12 +1977,13 @@ class Translator:
 			if gd_type != "":
 				return_type = " -> " + gd_type
 				argument_type = " : " + gd_type
-			text += generate_has_oneof(field_index, nesting)
+			if oneof_field:
+				text += generate_has_oneof(field_index, nesting)
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
 				var array_type := "[" + gd_type + "]" if gd_type else ""
 				text += tabulate("func get_" + f.name + "() -> Array" + array_type + ":\n", nesting)
 			else:
-				if f.qualificator == Analysis.FIELD_QUALIFICATOR.OPTIONAL:
+				if f.qualificator == Analysis.FIELD_QUALIFICATOR.OPTIONAL && !oneof_field:
 					text += tabulate("func has_" + f.name + "() -> bool:\n", nesting)
 					nesting += 1
 					text += tabulate("if " + varname + ".value != null:\n", nesting)
@@ -2284,6 +2307,74 @@ func work(
 		print("* Output file was created successfully. *")
 	else:
 		return false
+	return true
+
+func _normalize_dir_path(path : String) -> String:
+	if path.ends_with("/"):
+		return path
+	return path + "/"
+
+func _collect_proto_files(base_dir : String, relative_dir : String, files : Array) -> bool:
+	var current_dir = base_dir + relative_dir
+	var dir = DirAccess.open(current_dir)
+	if dir == null:
+		printerr("Cannot open directory: '", current_dir, "'.")
+		return false
+
+	dir.list_dir_begin()
+	while true:
+		var name = dir.get_next()
+		if name == "":
+			break
+		if name.begins_with("."):
+			continue
+		var rel_path = relative_dir + name
+		if dir.current_is_dir():
+			if !_collect_proto_files(base_dir, rel_path + "/", files):
+				dir.list_dir_end()
+				return false
+		elif name.get_extension().to_lower() == "proto":
+			files.append(rel_path)
+	dir.list_dir_end()
+	return true
+
+func work_directory(
+	input_dir : String,
+	output_dir : String,
+	core_file : String,
+	custom_prefix : String = "",
+	should_prefix_enums : bool = false,
+	custom_class_name : String = "",
+) -> bool:
+	var normalized_input_dir = _normalize_dir_path(input_dir)
+	var normalized_output_dir = _normalize_dir_path(output_dir)
+
+	var proto_files : Array = []
+	if !_collect_proto_files(normalized_input_dir, "", proto_files):
+		return false
+	if proto_files.is_empty():
+		printerr("No .proto files found in directory: '", input_dir, "'.")
+		return false
+
+	proto_files.sort()
+	for proto_file in proto_files:
+		var output_file = normalized_output_dir + proto_file.get_basename() + ".gd"
+		var output_dir_result = DirAccess.make_dir_recursive_absolute(output_file.get_base_dir())
+		if output_dir_result != OK and output_dir_result != ERR_ALREADY_EXISTS:
+			printerr("Cannot create output directory: '", output_file.get_base_dir(), "'.")
+			return false
+
+		if !work(
+			normalized_input_dir,
+			proto_file,
+			output_file,
+			core_file,
+			custom_prefix,
+			should_prefix_enums,
+			custom_class_name
+		):
+			return false
+
 	return true
 
 func _ready():

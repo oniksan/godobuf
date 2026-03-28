@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package loremnet;
+
+message IpsumToken {
+  uint64 id = 1;
+}
+
+message DolorVector {
+  float alpha = 1;
+  float beta = 2;
+  float gamma = 3;
+}
+
+message SitTick {
+  uint32 step = 1;
+}
+
+enum AmetCause {
+  AMET_CAUSE_UNSPECIFIED = 0;
+  AMET_CAUSE_QUOTA = 1;
+  AMET_CAUSE_MISMATCH = 2;
+  AMET_CAUSE_MANUAL = 3;
+}
