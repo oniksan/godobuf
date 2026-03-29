@@ -1,15 +1,14 @@
 # Godobuf v0.7.0
 
+> Please note that the plugin directory name has changed from `protobuf` to `godobuf` to match the plugin name.
+
 ## About
 Godobuf is a Google Protocol Buffers compiler from a `.proto` file description to a GDScript output file.
 The output file contains user protobuf messages represented by classes and protobuf core code that is responsible for data serialization/deserialization.
 Godobuf is used as a plugin for Godot 4.6.<br/>
 Godobuf is easy to use and does not require rebuilding the Godot engine because it is written in GDScript. All you need is to start the plugin.
 
-> Please note that the plugin directory name has changed from `protobuf` to `godobuf` to match the plugin name.
-
 ## Table of Contents
-- [About](#about)
 - [Version](#version)
 - [Features](#features)
 - [Installation](#installation)
