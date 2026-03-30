@@ -1,20 +1,26 @@
 # Godobuf v0.7.0
-> Please note that the plugin directory name has changed from `protobuf` to `godobuf` to match the plugin name
 
+> Please note that the plugin directory name has changed from `protobuf` to `godobuf` to match the plugin name.
 
-## Changelog in v0.7.0
-- Godot 4.6 compatibility
-- Added support for directory input
-- Added support for oneof type case matchers
-- Fixed manual
-- Renamed plugin directory
+## About
+Godobuf is a Google Protocol Buffers compiler from a `.proto` file description to a GDScript output file.
+The output file contains user protobuf messages represented by classes and protobuf core code that is responsible for data serialization/deserialization.
+Godobuf is used as a plugin for Godot 4.6.<br/>
+Godobuf is easy to use and does not require rebuilding the Godot engine because it is written in GDScript. All you need is to start the plugin.
 
-## Changelog in v0.6.1
-- Some bugs fixed
-
-## What's new in v0.6.0
-- Added support for Godot 4
-- Fixed bug with return type in add method for map
+## Table of Contents
+- [Version](#version)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Mapping of protocol buffers data types to GDScript](#mapping-of-protocol-buffers-data-types-to-gdscript)
+- [Default values](#default-values)
+- [Keywords](#keywords)
+- [Using generated .gd file in Godot project](#using-generated-gd-file-in-godot-project)
+- [Unpack result codes](#unpack-result-codes)
+- [API](#api)
+- [Related links](#related-links)
+- [Changelog](#changelog)
 
 ## Version
 Current Godobuf master branch is compatible with Godot 4.6.<br/>
@@ -22,12 +28,6 @@ If you want to use the Godobuf plugin for other Godot versions, see:
 - 3.0.x use branch tagged v0.2.2 https://github.com/oniksan/godobuf/tree/v0.2.2
 - 3.1.x use branch tagged v0.3.0 https://github.com/oniksan/godobuf/tree/v0.3.0
 - 3.5.x use branch tagged v0.5.0 https://github.com/oniksan/godobuf/tree/v0.5.0
-
-## About
-Godobuf is a Google Protocol Buffers compiler from a `.proto` file description to a GDScript output file.
-The output file contains user protobuf messages represented by classes and protobuf core code that is responsible for data serialization/deserialization.
-Godobuf is used as a plugin for Godot 4.6.<br/>
-Godobuf is easy to use and does not require rebuilding the Godot engine because it is written in GDScript. All you need is to start the plugin.
 
 ## Features
 ### Supported
@@ -617,3 +617,20 @@ Godot docs: https://docs.godotengine.org/en/stable/ <br/>
 Godobuf test suites: https://github.com/kittenseater/godobuf-test <br/>
 https://github.com/kittenseater/godobuf-gen-v2 <br/>
 https://github.com/kittenseater/godobuf-gen-v3
+
+## Changelog
+
+### Changelog in v0.7.0
+- Godot 4.6 compatibility
+- Added support for directory input
+- Added support for oneof type case matchers
+- Fixed manual
+- Renamed plugin directory
+
+### Changelog in v0.6.1
+- Some bugs fixed
+
+### What's new in v0.6.0
+- Added support for Godot 4
+- Fixed bug with return type in add method for map
+
