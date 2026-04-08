@@ -33,7 +33,7 @@ extends Node
 
 const PROTO_VERSION_CONST : String = "const PROTO_VERSION = "
 const PROTO_VERSION_DEFAULT : String = PROTO_VERSION_CONST + "0"
-const WARNING_IGNORE_ANNOTATIONS : String = "@warning_ignore_start(\"untyped_declaration\")\n@warning_ignore_start(\"inferred_declaration\")\n@warning_ignore_start(\"unsafe_call_argument\")\n@warning_ignore_start(\"unsafe_method_access\")\n\n"
+const WARNING_IGNORE_ANNOTATIONS : String = "@warning_ignore_start(\"untyped_declaration\")\n@warning_ignore_start(\"inferred_declaration\")\n@warning_ignore_start(\"unsafe_call_argument\")\n@warning_ignore_start(\"unsafe_method_access\")\n@warning_ignore_start(\"return_value_discarded\")\n\n"
 
 const ONE_OF_CASE_FUNCTION_SUFFIX : String = "_case"
 const ONE_OF_CASE_ENUM_FIELD_SUFFIX : String = "Case"
