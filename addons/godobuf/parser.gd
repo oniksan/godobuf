@@ -33,6 +33,7 @@ extends Node
 
 const PROTO_VERSION_CONST : String = "const PROTO_VERSION = "
 const PROTO_VERSION_DEFAULT : String = PROTO_VERSION_CONST + "0"
+const WARNING_IGNORE_ANNOTATIONS : String = "@warning_ignore_start(\"untyped_declaration\")\n@warning_ignore_start(\"inferred_declaration\")\n@warning_ignore_start(\"unsafe_call_argument\")\n@warning_ignore_start(\"unsafe_method_access\")\n\n"
 
 const ONE_OF_CASE_FUNCTION_SUFFIX : String = "_case"
 const ONE_OF_CASE_ENUM_FIELD_SUFFIX : String = "Case"
@@ -50,14 +51,16 @@ class Document:
 
 class PrefixOptions:
 
-	func _init(pre : String, spe : bool = false, cn : String = ""):
+	func _init(pre : String, spe : bool = false, cn : String = "", sawia : bool = false):
 		prefix = pre
 		should_prefix_enums = spe
 		custom_class_name = cn
+		should_add_warning_ignore_annotations = sawia
 
 	var prefix: String = ""
 	var should_prefix_enums : bool
 	var custom_class_name: String = ""
+	var should_add_warning_ignore_annotations : bool = false
 
 
 class TokenPosition:
@@ -2185,6 +2188,8 @@ class Translator:
 		var text : String = ""
 		var nesting : int = 0
 		core_text = core_text.replace(PROTO_VERSION_DEFAULT, PROTO_VERSION_CONST + str(proto_version))
+		if prefix_options.should_add_warning_ignore_annotations:
+			core_text = core_text.replace(PROTO_VERSION_CONST, WARNING_IGNORE_ANNOTATIONS + PROTO_VERSION_CONST)
 		if prefix_options.custom_class_name != "":
 			text += "class_name " + prefix_options.custom_class_name + "\n\n"
 		text += core_text + "\n\n\n"
@@ -2333,12 +2338,13 @@ func work(
 	custom_prefix : String = "",
 	should_prefix_enums : bool = false,
 	custom_class_name : String = "",
+	should_add_warning_ignore_annotations : bool = false,
 ) -> bool:
 
 	var in_full_name : String = path + in_file
 	var imports : Array = []
 	var analyzes : Dictionary = {}
-	var prefix_options : PrefixOptions = PrefixOptions.new(custom_prefix, should_prefix_enums, custom_class_name)
+	var prefix_options : PrefixOptions = PrefixOptions.new(custom_prefix, should_prefix_enums, custom_class_name, should_add_warning_ignore_annotations)
 	
 	print("Compiling source: '", in_full_name, "', output: '", out_file, "'.")
 	print("\n1. Parsing:")
@@ -2394,6 +2400,7 @@ func work_directory(
 	custom_prefix : String = "",
 	should_prefix_enums : bool = false,
 	custom_class_name : String = "",
+	should_add_warning_ignore_annotations : bool = false,
 ) -> bool:
 	var normalized_input_dir = _normalize_dir_path(input_dir)
 	var normalized_output_dir = _normalize_dir_path(output_dir)
@@ -2420,7 +2427,8 @@ func work_directory(
 			core_file,
 			custom_prefix,
 			should_prefix_enums,
-			custom_class_name
+			custom_class_name,
+			should_add_warning_ignore_annotations
 		):
 			return false
 

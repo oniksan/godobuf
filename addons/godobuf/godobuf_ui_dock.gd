@@ -112,10 +112,12 @@ func _on_CompileButton_pressed():
 			show_dialog($ClassNameAcceptDialog)
 			return
 
+	var should_add_warning_ignore_annotations = $WarningIgnoreAnnotationsCheckButton.is_pressed()
+
 	var parser = Parser.new()
 	
 	if parser.work(Util.extract_dir(input_file_path), Util.extract_filename(input_file_path), \
-		output_file_path, "res://addons/godobuf/godobuf_core.gd", message_prefix, should_prefix_enums, custom_class_name):
+		output_file_path, "res://addons/godobuf/godobuf_core.gd", message_prefix, should_prefix_enums, custom_class_name, should_add_warning_ignore_annotations):
 		show_dialog($SuccessAcceptDialog)
 	else:
 		show_dialog($FailAcceptDialog)
@@ -147,6 +149,8 @@ func _on_CompileDirectoryButton_pressed():
 			show_dialog($ClassNameAcceptDialog)
 			return
 
+	var should_add_warning_ignore_annotations = $WarningIgnoreAnnotationsCheckButton.is_pressed()
+
 	var parser = Parser.new()
 	if parser.work_directory(
 		input_dir_path,
@@ -154,7 +158,8 @@ func _on_CompileDirectoryButton_pressed():
 		"res://addons/godobuf/godobuf_core.gd",
 		message_prefix,
 		should_prefix_enums,
-		custom_class_name
+		custom_class_name,
+		should_add_warning_ignore_annotations
 	):
 		show_dialog($SuccessAcceptDialog)
 	else:
