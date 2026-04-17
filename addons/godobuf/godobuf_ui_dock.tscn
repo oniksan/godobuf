@@ -159,6 +159,11 @@ text = "Class name:"
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="WarningIgnoreAnnotationsCheckButton" type="CheckButton" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Add warning ignore annotations?"
+
 [node name="HSeparator3" type="HSeparator" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
