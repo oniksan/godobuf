@@ -2073,6 +2073,7 @@ class Translator:
 			elif class_table[class_index].type == Analysis.CLASS_TYPE.MAP:
 				cls_pref += tabulate("class " + class_table[class_index].name + ":\n", nesting)
 			nesting += 1
+			cls_pref += tabulate("extends RefCounted\n", nesting)
 			cls_pref += tabulate("func _init():\n", nesting)
 			text += cls_pref
 			nesting += 1
