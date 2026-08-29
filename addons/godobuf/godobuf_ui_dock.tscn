@@ -1,241 +1,255 @@
-[gd_scene load_steps=2 format=3 uid="uid://cinebpo0mb8ri"]
+[gd_scene format=3 uid="uid://cinebpo0mb8ri"]
 
-[ext_resource type="Script" path="res://addons/godobuf/godobuf_ui_dock.gd" id="1"]
+[ext_resource type="Script" uid="uid://c37quqc2rwi6o" path="res://addons/godobuf/godobuf_ui_dock.gd" id="1"]
 
-[node name="Godobuf" type="VBoxContainer"]
+[node name="Godobuf" type="ScrollContainer" unique_id=1090770107]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Godobuf" type="VBoxContainer" parent="." unique_id=1307628038]
+layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("1")
 
-[node name="SingleConversionLabel" type="Label" parent="."]
+[node name="SingleConversionLabel" type="Label" parent="Godobuf" unique_id=695007825]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Single file conversion"
 
-[node name="InputFileLabel" type="Label" parent="."]
+[node name="InputFileLabel" type="Label" parent="Godobuf" unique_id=191656530]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Input protobuf file:"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
+[node name="HBoxContainer" type="HBoxContainer" parent="Godobuf" unique_id=457126964]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InputFileEdit" type="LineEdit" parent="HBoxContainer"]
+[node name="InputFileEdit" type="LineEdit" parent="Godobuf/HBoxContainer" unique_id=1145130642]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 editable = false
 
-[node name="InputFileButton" type="Button" parent="HBoxContainer"]
+[node name="InputFileButton" type="Button" parent="Godobuf/HBoxContainer" unique_id=1771637717]
 layout_mode = 2
 text = "..."
 
-[node name="OutputFileButton" type="Label" parent="."]
+[node name="OutputFileButton" type="Label" parent="Godobuf" unique_id=1914503977]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Output GDScript file:"
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="."]
+[node name="HBoxContainer2" type="HBoxContainer" parent="Godobuf" unique_id=294332678]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="OutputFileEdit" type="LineEdit" parent="HBoxContainer2"]
+[node name="OutputFileEdit" type="LineEdit" parent="Godobuf/HBoxContainer2" unique_id=2077981136]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 editable = false
 
-[node name="OutputFileButton" type="Button" parent="HBoxContainer2"]
+[node name="OutputFileButton" type="Button" parent="Godobuf/HBoxContainer2" unique_id=1749772867]
 layout_mode = 2
 text = "..."
 
-[node name="CompileButton" type="Button" parent="."]
+[node name="CompileButton" type="Button" parent="Godobuf" unique_id=1550769550]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Compile single file"
 
-[node name="HSeparator" type="HSeparator" parent="."]
+[node name="HSeparator" type="HSeparator" parent="Godobuf" unique_id=672761076]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="BatchConversionLabel" type="Label" parent="."]
+[node name="BatchConversionLabel" type="Label" parent="Godobuf" unique_id=14263988]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Directory conversion"
 
-[node name="InputDirLabel" type="Label" parent="."]
+[node name="InputDirLabel" type="Label" parent="Godobuf" unique_id=702106799]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Input proto directory:"
 
-[node name="HBoxContainer5" type="HBoxContainer" parent="."]
+[node name="HBoxContainer5" type="HBoxContainer" parent="Godobuf" unique_id=46707973]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InputDirEdit" type="LineEdit" parent="HBoxContainer5"]
+[node name="InputDirEdit" type="LineEdit" parent="Godobuf/HBoxContainer5" unique_id=934368412]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 editable = false
 
-[node name="InputDirButton" type="Button" parent="HBoxContainer5"]
+[node name="InputDirButton" type="Button" parent="Godobuf/HBoxContainer5" unique_id=186685046]
 layout_mode = 2
 text = "..."
 
-[node name="OutputDirLabel" type="Label" parent="."]
+[node name="OutputDirLabel" type="Label" parent="Godobuf" unique_id=1277876042]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Output directory:"
 
-[node name="HBoxContainer6" type="HBoxContainer" parent="."]
+[node name="HBoxContainer6" type="HBoxContainer" parent="Godobuf" unique_id=180786535]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="OutputDirEdit" type="LineEdit" parent="HBoxContainer6"]
+[node name="OutputDirEdit" type="LineEdit" parent="Godobuf/HBoxContainer6" unique_id=1360734757]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 editable = false
 
-[node name="OutputDirButton" type="Button" parent="HBoxContainer6"]
+[node name="OutputDirButton" type="Button" parent="Godobuf/HBoxContainer6" unique_id=842535729]
 layout_mode = 2
 text = "..."
 
-[node name="CompileDirectoryButton" type="Button" parent="."]
+[node name="CompileDirectoryButton" type="Button" parent="Godobuf" unique_id=1225023219]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Compile directory"
 
-[node name="HSeparator2" type="HSeparator" parent="."]
+[node name="HSeparator2" type="HSeparator" parent="Godobuf" unique_id=1549156217]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CompileOptionsLabel" type="Label" parent="."]
+[node name="CompileOptionsLabel" type="Label" parent="Godobuf" unique_id=1590627085]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Compile options"
 
-[node name="MessagePrefixCheckButton" type="CheckButton" parent="."]
+[node name="MessagePrefixCheckButton" type="CheckButton" parent="Godobuf" unique_id=1114393919]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Use a custom message prefix?"
 
-[node name="HBoxContainer3" type="HBoxContainer" parent="."]
+[node name="HBoxContainer3" type="HBoxContainer" parent="Godobuf" unique_id=2049004053]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MessagePrefixLabel" type="Label" parent="HBoxContainer3"]
+[node name="MessagePrefixLabel" type="Label" parent="Godobuf/HBoxContainer3" unique_id=1942352232]
 layout_mode = 2
 text = "Prefix:"
 
-[node name="MessagePrefixEdit" type="LineEdit" parent="HBoxContainer3"]
+[node name="MessagePrefixEdit" type="LineEdit" parent="Godobuf/HBoxContainer3" unique_id=1790844237]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="EnumPrefixCheckButton" type="CheckButton" parent="."]
+[node name="EnumPrefixCheckButton" type="CheckButton" parent="Godobuf" unique_id=1059571521]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Use the prefix in enum names?"
 
-[node name="ClassNameCheckButton" type="CheckButton" parent="."]
+[node name="ClassNameCheckButton" type="CheckButton" parent="Godobuf" unique_id=1353426160]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Use a custom class_name?"
 
-[node name="HBoxContainer4" type="HBoxContainer" parent="."]
+[node name="HBoxContainer4" type="HBoxContainer" parent="Godobuf" unique_id=167425967]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ClassNameLabel" type="Label" parent="HBoxContainer4"]
+[node name="ClassNameLabel" type="Label" parent="Godobuf/HBoxContainer4" unique_id=2130063398]
 layout_mode = 2
 text = "Class name:"
 
-[node name="ClassNameEdit" type="LineEdit" parent="HBoxContainer4"]
+[node name="ClassNameEdit" type="LineEdit" parent="Godobuf/HBoxContainer4" unique_id=1131412676]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="WarningIgnoreAnnotationsCheckButton" type="CheckButton" parent="."]
+[node name="WarningIgnoreAnnotationsCheckButton" type="CheckButton" parent="Godobuf" unique_id=988729906]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Add warning ignore annotations?"
 
-[node name="HSeparator3" type="HSeparator" parent="."]
+[node name="HSeparator3" type="HSeparator" parent="Godobuf" unique_id=2116914446]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="TestsLabel" type="Label" parent="."]
+[node name="TestsLabel" type="Label" parent="Godobuf" unique_id=2068362559]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Tests"
 
-[node name="TestButton2" type="Button" parent="."]
+[node name="TestButton2" type="Button" parent="Godobuf" unique_id=1467088409]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Run unit tests (proto 2)"
 
-[node name="TestButton3" type="Button" parent="."]
+[node name="TestButton3" type="Button" parent="Godobuf" unique_id=1243537108]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Run unit tests (proto 3)"
 
-[node name="TestBatchButton" type="Button" parent="."]
+[node name="TestBatchButton" type="Button" parent="Godobuf" unique_id=165378199]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Run batch compile tests"
 
-[node name="InputFileDialog" type="FileDialog" parent="."]
+[node name="InputFileDialog" type="FileDialog" parent="Godobuf" unique_id=714343936]
 title = "Open a File"
 ok_button_text = "Open"
 file_mode = 0
 access = 2
 filters = PackedStringArray("*.proto; Google Protobuf File")
 
-[node name="OutputFileDialog" type="FileDialog" parent="."]
+[node name="OutputFileDialog" type="FileDialog" parent="Godobuf" unique_id=304404445]
 access = 2
 filters = PackedStringArray("*.gd; GDScript")
 
-[node name="InputDirDialog" type="FileDialog" parent="."]
+[node name="InputDirDialog" type="FileDialog" parent="Godobuf" unique_id=759743989]
+title = "Open a Directory"
+file_mode = 2
 access = 2
 
-[node name="OutputDirDialog" type="FileDialog" parent="."]
+[node name="OutputDirDialog" type="FileDialog" parent="Godobuf" unique_id=1118620033]
+title = "Open a Directory"
+file_mode = 2
 access = 2
 
-[node name="FilesErrorAcceptDialog" type="AcceptDialog" parent="."]
+[node name="FilesErrorAcceptDialog" type="AcceptDialog" parent="Godobuf" unique_id=1455485534]
 dialog_text = "Need select both output & input files!"
 
-[node name="DirsErrorAcceptDialog" type="AcceptDialog" parent="."]
+[node name="DirsErrorAcceptDialog" type="AcceptDialog" parent="Godobuf" unique_id=995232339]
 dialog_text = "Need select both output & input directories!"
 
-[node name="PrefixErrorAcceptDialog" type="AcceptDialog" parent="."]
+[node name="PrefixErrorAcceptDialog" type="AcceptDialog" parent="Godobuf" unique_id=307435614]
 dialog_text = "The provided prefix is not a valid identifier!"
 
-[node name="ClassNameAcceptDialog" type="AcceptDialog" parent="."]
+[node name="ClassNameAcceptDialog" type="AcceptDialog" parent="Godobuf" unique_id=1118420670]
 dialog_text = "The provided class_name is not a valid identifier!"
 
-[node name="SuccessAcceptDialog" type="AcceptDialog" parent="."]
+[node name="SuccessAcceptDialog" type="AcceptDialog" parent="Godobuf" unique_id=954512089]
 dialog_text = "Compile success done."
 
-[node name="FailAcceptDialog" type="AcceptDialog" parent="."]
+[node name="FailAcceptDialog" type="AcceptDialog" parent="Godobuf" unique_id=1972042353]
 dialog_text = "Compile fail. See details in console output."
 
-[node name="SuccessTestDialog" type="AcceptDialog" parent="."]
+[node name="SuccessTestDialog" type="AcceptDialog" parent="Godobuf" unique_id=692757271]
 dialog_text = "All tests were completed successfully.
 See console for details."
 
-[node name="FailTestDialog" type="AcceptDialog" parent="."]
+[node name="FailTestDialog" type="AcceptDialog" parent="Godobuf" unique_id=1767728527]
 dialog_text = "Errors occurred while running tests!
 See console for details."
 
-[connection signal="pressed" from="HBoxContainer/InputFileButton" to="." method="_on_InputFileButton_pressed"]
-[connection signal="pressed" from="HBoxContainer2/OutputFileButton" to="." method="_on_OutputFileButton_pressed"]
-[connection signal="pressed" from="HBoxContainer5/InputDirButton" to="." method="_on_InputDirButton_pressed"]
-[connection signal="pressed" from="HBoxContainer6/OutputDirButton" to="." method="_on_OutputDirButton_pressed"]
-[connection signal="pressed" from="CompileButton" to="." method="_on_CompileButton_pressed"]
-[connection signal="pressed" from="CompileDirectoryButton" to="." method="_on_CompileDirectoryButton_pressed"]
-[connection signal="pressed" from="TestButton2" to="." method="_on_TestButton2_pressed"]
-[connection signal="pressed" from="TestButton3" to="." method="_on_TestButton3_pressed"]
-[connection signal="pressed" from="TestBatchButton" to="." method="_on_TestBatchButton_pressed"]
-[connection signal="file_selected" from="InputFileDialog" to="." method="_on_InputFileDialog_file_selected"]
-[connection signal="file_selected" from="OutputFileDialog" to="." method="_on_OutputFileDialog_file_selected"]
-[connection signal="dir_selected" from="InputDirDialog" to="." method="_on_InputDirDialog_dir_selected"]
-[connection signal="dir_selected" from="OutputDirDialog" to="." method="_on_OutputDirDialog_dir_selected"]
+[connection signal="pressed" from="Godobuf/HBoxContainer/InputFileButton" to="Godobuf" method="_on_InputFileButton_pressed"]
+[connection signal="pressed" from="Godobuf/HBoxContainer2/OutputFileButton" to="Godobuf" method="_on_OutputFileButton_pressed"]
+[connection signal="pressed" from="Godobuf/CompileButton" to="Godobuf" method="_on_CompileButton_pressed"]
+[connection signal="pressed" from="Godobuf/HBoxContainer5/InputDirButton" to="Godobuf" method="_on_InputDirButton_pressed"]
+[connection signal="pressed" from="Godobuf/HBoxContainer6/OutputDirButton" to="Godobuf" method="_on_OutputDirButton_pressed"]
+[connection signal="pressed" from="Godobuf/CompileDirectoryButton" to="Godobuf" method="_on_CompileDirectoryButton_pressed"]
+[connection signal="pressed" from="Godobuf/TestButton2" to="Godobuf" method="_on_TestButton2_pressed"]
+[connection signal="pressed" from="Godobuf/TestButton3" to="Godobuf" method="_on_TestButton3_pressed"]
+[connection signal="pressed" from="Godobuf/TestBatchButton" to="Godobuf" method="_on_TestBatchButton_pressed"]
+[connection signal="file_selected" from="Godobuf/InputFileDialog" to="Godobuf" method="_on_InputFileDialog_file_selected"]
+[connection signal="file_selected" from="Godobuf/OutputFileDialog" to="Godobuf" method="_on_OutputFileDialog_file_selected"]
+[connection signal="dir_selected" from="Godobuf/InputDirDialog" to="Godobuf" method="_on_InputDirDialog_dir_selected"]
+[connection signal="dir_selected" from="Godobuf/OutputDirDialog" to="Godobuf" method="_on_OutputDirDialog_dir_selected"]

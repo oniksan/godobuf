@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package loremnet;
+package common;
 
 message IpsumToken {
   uint64 id = 1;

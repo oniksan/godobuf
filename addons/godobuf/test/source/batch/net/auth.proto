@@ -14,6 +14,6 @@ message S2C_Ipsum {
 }
 
 message S2C_Amet {
-  AmetCause cause = 1;
+  common.AmetCause cause = 1;
   optional string note = 2;
 }
