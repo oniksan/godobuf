@@ -136,12 +136,14 @@ class AnalyzeResult:
 
 class Analysis:
 	
-	func _init(path : String, doc : Document):
+	func _init(path : String, doc : Document, proto_dir : String = ""):
 		path_dir = path
 		document = doc
+		proto_path = proto_dir
 	
 	var document : Document
 	var path_dir : String
+	var proto_path : String
 	
 	const LEX = {
 		LETTER = "[A-Za-z]",
@@ -1200,6 +1202,8 @@ class Analysis:
 			offset += 1
 		var import_name : String = get_text_from_token(indexed_tokens[offset].token)
 		var candidate_paths : Array = [path_dir + import_name]
+		if proto_path != "":
+			candidate_paths.append(proto_path + import_name)
 		if import_name.contains("/"):
 			var slash_pos = import_name.find("/")
 			if slash_pos >= 0 and slash_pos + 1 < import_name.length():
@@ -2226,7 +2230,7 @@ class ImportFile:
 	var path : String
 	var parent_index : int
 
-func parse_all(analyzes : Dictionary, imports : Array, path : String, full_name : String, parent_index : int) -> bool:
+func parse_all(analyzes : Dictionary, imports : Array, path : String, full_name : String, parent_index : int, proto_path : String = "") -> bool:
 	
 	if !FileAccess.file_exists(full_name):
 		printerr(full_name, ": not found.")
@@ -2242,14 +2246,14 @@ func parse_all(analyzes : Dictionary, imports : Array, path : String, full_name 
 	
 	if !analyzes.has(sha):
 		print(full_name, ": parsing.")
-		var analysis : Analysis = Analysis.new(path, doc)
+		var analysis : Analysis = Analysis.new(path, doc, proto_path)
 		var an_result : AnalyzeResult = analysis.analyze()
 		if an_result.state:
 			analyzes[sha] = an_result
 			var parent : int = imports.size()
 			imports.append(ImportFile.new(sha, doc.name, parent_index))
 			for im in an_result.imports:
-				if !parse_all(analyzes, imports, path, im.path, parent):
+				if !parse_all(analyzes, imports, path, im.path, parent, proto_path):
 					return false
 		else:
 			printerr(doc.name + ": parsing error.")
@@ -2340,6 +2344,7 @@ func work(
 	should_prefix_enums : bool = false,
 	custom_class_name : String = "",
 	should_add_warning_ignore_annotations : bool = false,
+	proto_path : String = "",
 ) -> bool:
 
 	var in_full_name : String = path + in_file
@@ -2349,7 +2354,7 @@ func work(
 	
 	print("Compiling source: '", in_full_name, "', output: '", out_file, "'.")
 	print("\n1. Parsing:")
-	if parse_all(analyzes, imports, path, in_full_name, -1):
+	if parse_all(analyzes, imports, path, in_full_name, -1, proto_path):
 		print("* Parsing completed successfully. *")
 	else:
 		return false

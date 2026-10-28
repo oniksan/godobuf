@@ -87,7 +87,8 @@ If you want to use the Godobuf plugin for other Godot versions, see:
 
 ### From the Command Line
 1. From the root directory of your project, run `godot4 --headless -s addons/godobuf/godobuf_cmdln.gd --input=A.proto --output=my_proto.gd`
-2. Optionally, define an alias: `alias godobuf='godot4 -s addons/godobuf/godobuf_cmdln.gd'`
+2. Pass `--proto_path=<dir>` to also look up imports under `<dir>`, like `-I` in protoc and buf. An import is tried next to the input file first.
+3. Optionally, define an alias: `alias godobuf='godot4 -s addons/godobuf/godobuf_cmdln.gd'`
 
 ### Unit tests
 0. This option is mainly for those who modify the code or want to check the stability of this version.
