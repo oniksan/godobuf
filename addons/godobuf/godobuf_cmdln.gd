@@ -50,7 +50,7 @@ func process_batch(input_batch_path, output_batch_path, message_prefix, should_p
 	else:
 		error("Compilation failed.")	
 
-func process_file(input_file_name, output_file_name, message_prefix, should_prefix_enums, custom_class_name):
+func process_file(input_file_name, output_file_name, message_prefix, should_prefix_enums, custom_class_name, proto_path):
 	print("Input file: " + input_file_name)
 	print("Output file: " + output_file_name)
 	var file = FileAccess.open(input_file_name, FileAccess.READ)
@@ -59,7 +59,7 @@ func process_file(input_file_name, output_file_name, message_prefix, should_pref
 	var parser = Parser.new()
 	if parser.work(Util.extract_dir(input_file_name), Util.extract_filename(input_file_name), \
 		output_file_name, godobuf_core_path, \
-		message_prefix, should_prefix_enums, custom_class_name):
+		message_prefix, should_prefix_enums, custom_class_name, false, proto_path):
 		print("Compiled '", input_file_name, "' to '", output_file_name, "'.")
 	else:
 		error("Compilation failed.")
@@ -117,9 +117,15 @@ func _init():
 		if !custom_class_name.is_valid_identifier():
 			error("The provided class_name is not a valid identifier: " + custom_class_name)
 
+	var proto_path = ""
+	if arguments.has("proto_path"):
+		proto_path = arguments["proto_path"]
+		if !proto_path.ends_with("/"):
+			proto_path += "/"
+
 	if batch_mode:
 		process_batch(input_batch_path, output_batch_path, message_prefix, should_prefix_enums, custom_class_name)
 	else:
-		process_file(input_file_name, output_file_name, message_prefix, should_prefix_enums, custom_class_name)
+		process_file(input_file_name, output_file_name, message_prefix, should_prefix_enums, custom_class_name, proto_path)
 
 	quit()
