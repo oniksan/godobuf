@@ -2064,7 +2064,7 @@ class Translator:
 				text += tabulate(varname + ".value = value\n", nesting)
 		return text
 
-	func needs_init(class_index: int) -> bool:
+	func needs_init(class_index : int) -> bool:
 		for i in range(field_table.size()):
 			if field_table[i].parent_class_id == class_index:	
 				return true
@@ -2080,11 +2080,12 @@ class Translator:
 				cls_pref += tabulate("class " + class_table[class_index].name + ":\n", nesting)
 			nesting += 1
 			cls_pref += tabulate("extends RefCounted\n", nesting)
-			if needs_init(class_index):
+			var needs_init : bool = needs_init(class_index)
+			if needs_init:
 				cls_pref += tabulate("func _init():\n", nesting)
 			text += cls_pref
 			nesting += 1
-			if needs_init(class_index):
+			if needs_init:
 				text += tabulate("var service\n", nesting)
 				text += tabulate("\n", nesting)
 			var field_text : String = ""
