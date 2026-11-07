@@ -2087,7 +2087,7 @@ class Translator:
 			nesting += 1
 			if needs_init:
 				text += tabulate("var service\n", nesting)
-				text += tabulate("\n", nesting)
+			text += tabulate("\n", nesting)
 			var field_text : String = ""
 			for i in range(field_table.size()):
 				if field_table[i].parent_class_id == class_index:
